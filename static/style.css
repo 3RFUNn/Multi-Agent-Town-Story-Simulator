@@ -1,0 +1,208 @@
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f0f4f8; /* Light blue-gray background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow: hidden; /* Prevent body scrolling */
+}
+
+#app-container {
+    display: flex;
+    flex-direction: row; /* Layout side-by-side */
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    overflow: hidden; /* Ensures rounded corners */
+    max-width: 1400px; /* Max width for the whole app */
+    width: 95%; /* Responsive width */
+    height: 90vh; /* Responsive height */
+}
+
+#game-area {
+    flex-grow: 1; /* Takes up available space */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    background-color: #e2e8f0; /* Lighter background for the game map */
+    position: relative;
+    overflow: hidden; /* Hide overflow from map container */
+}
+
+#game-grid-wrapper {
+    width: 100%; /* Take full width of game-area */
+    height: 100%; /* Take full height of game-area */
+    overflow: auto; /* Enable scrolling for the map content */
+    border: 2px solid #6b7280; /* Gray border */
+    border-radius: 8px;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.1);
+    background-color: #d1d5db; /* Default cell background */
+    cursor: grab; /* Indicate draggable */
+}
+
+#game-grid-container {
+    display: grid;
+    /* width and height will be set by JS to full map size */
+    /* grid-template-columns and rows will be set by JS with px values */
+    position: relative; /* For agent positioning */
+}
+
+.grid-cell {
+    width: 40px; /* Cell size */
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    border: 0.5px solid rgba(203, 213, 224, 0.5); /* Subtle cell borders */
+    box-sizing: border-box;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    overflow: hidden; /* Hide overflow for cell content */
+    transition: border-color 0.1s ease-in-out; /* Smooth highlight transition */
+}
+
+/* Base colors for cell types */
+.grass { background-color: #a7f3d0; }
+.path { background-color: #cbd5e1; }
+.house { background-color: #fecaca; }
+.cafe { background-color: #fcd34d; }
+.park { background-color: #86efac; }
+.supply_store { background-color: #bfdbfe; }
+.college { background-color: #e9d5ff; }
+.grocery_pharmacy { background-color: #fdbf8b; }
+.college_dorm { background-color: #c7d2fe; }
+.bar { background-color: #fbcfe8; }
+.co_living { background-color: #b0e0e6; } /* Light blue for co-living */
+
+/* SVG icon styling for buildings */
+.grid-cell svg {
+    width: 80%;
+    height: 80%;
+    opacity: 0.7;
+    color: rgba(0, 0, 0, 0.6); /* Default icon color */
+}
+.house svg { color: #881111; }
+.cafe svg { color: #553300; }
+.park svg { color: #004400; }
+.supply_store svg { color: #0000AA; }
+.college svg { color: #440088; }
+.grocery_pharmacy svg { color: #AA5500; }
+.college_dorm svg { color: #220088; }
+.bar svg { color: #880044; }
+.co_living svg { color: #005f6b; }
+
+.agent-avatar {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.9em;
+    font-weight: bold;
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.7);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    animation: pulse 1.5s infinite alternate;
+    z-index: 10; /* Ensure agents are above cell icons */
+}
+
+.agent-avatar:hover {
+    transform: scale(1.1);
+    border-color: #6b7280;
+}
+
+@keyframes pulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.05); }
+}
+
+/* Highlight for clicked places */
+.highlight-place {
+    border: 2px solid #3b82f6 !important; /* Blue ring */
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+#ui-panel {
+    width: 350px;
+    padding: 20px;
+    background-color: #f8fafc;
+    border-left: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    /* Added for scrolling */
+    overflow-y: auto; /* Enable vertical scrolling */
+    flex-shrink: 0; /* Prevent panel from shrinking */
+}
+
+.panel-section {
+    background-color: #ffffff;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+#log-output {
+    height: 250px;
+    overflow-y: auto;
+    background-color: #fefefe;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 10px;
+    font-size: 0.85em;
+    line-height: 1.4;
+    color: #4a5568;
+}
+
+#log-output p {
+    margin-bottom: 4px;
+}
+
+#inspector-output {
+    min-height: 150px;
+    background-color: #fefefe;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 10px;
+    font-size: 0.9em;
+    color: #4a5568;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+    #app-container {
+        flex-direction: column;
+        height: auto;
+        max-width: 95%;
+    }
+    #game-area {
+        padding: 10px;
+    }
+    #ui-panel {
+        width: 100%;
+        border-left: none;
+        border-top: 1px solid #e2e8f0;
+        /* Adjust height for mobile if needed, or let content dictate */
+        max-height: 50vh; /* Example: limit height on mobile to prevent excessive scrolling */
+    }
+    .grid-cell {
+        width: 30px;
+        height: 30px;
+    }
+    .agent-avatar {
+        width: 25px;
+        height: 25px;
+        font-size: 0.8em;
+    }
+}

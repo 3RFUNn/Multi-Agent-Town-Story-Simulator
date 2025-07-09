@@ -52,7 +52,7 @@ const PLACES = {
     'cafe_hobbs': { type: 'Cafe', name: 'Hobbs Cafe', coords: [[3,6],[4,6],[3,7],[4,7]] },
     'supply_store_harvey': { type: 'Supply Store', name: 'Harvey Oak Supply Store', coords: [[6,1],[7,1],[6,2],[7,2]] },
     'college_oak_hill': { type: 'College', name: 'Oak Hill College', coords: [[18,1],[19,1],[20,1],[21,1],[22,1],[18,2],[19,2],[20,2],[21,2],[22,2],[18,3],[19,3],[20,3],[21,3],[22,3]] },
-    'grocery_pharmacy_willow': { type: 'Grocery & Pharmacy', name: 'Willow Market and Pharmacy', coords: [[7,8],[8,8],[9,8],[10,8],[11,8],[12,8],[7,9],[8,9],[9,9],[10,9],[11,9],[12,9]] },
+    'grocery_pharmacy_willow': { type: 'Grocery & Pharmacy', name: 'Willow Market and Pharmacy', coords: [[7,8],[8,8],[9,8],[10,8],[11,8],[7,9],[8,9],[9,9],[10,9],[11,9]] }, // Updated coordinates
     'johnson_park': { type: 'Park', name: 'Johnson Park', coords: [[3,10],[4,10],[5,10],[3,11],[4,11],[5,11],[3,12],[4,12],[5,12]] },
     // Changed 'house_lin_family' to 'Houses' and added more generic houses
     'houses_south_west_1': { type: 'Houses', name: 'South West Houses 1', coords: [[3,14],[4,14],[5,14],[3,15],[4,15],[5,15]] },
@@ -76,11 +76,13 @@ for (const placeId in PLACES) {
 
 // Initial agent data with home locations
 let AGENTS = [
-    { id: 'john', name: 'John Lin', x: 3, y: 14, icon: 'J', color: '#007bff', currentAction: 'At home', home: {x: 3, y: 14}, destination: null, path: [], pathIndex: 0, isMoving: false, state: 'idle', actionEndTime: 0 },
-    { id: 'isabella', name: 'Isabella Rodriguez', x: 3, y: 6, icon: 'I', color: '#dc3545', currentAction: 'At home', home: {x: 3, y: 6}, destination: null, path: [], pathIndex: 0, isMoving: false, state: 'idle', actionEndTime: 0 },
-    { id: 'sam', name: 'Sam Moore', x: 24, y: 1, icon: 'S', color: '#28a745', currentAction: 'At home', home: {x: 24, y: 1}, destination: null, path: [], pathIndex: 0, isMoving: false, state: 'idle', actionEndTime: 0 },
-    { id: 'maria', name: 'Maria Lopez', x: 3, y: 18, icon: 'M', color: '#ffc107', currentAction: 'At home', home: {x: 3, y: 18}, destination: null, path: [], pathIndex: 0, isMoving: false, state: 'idle', actionEndTime: 0 },
-    { id: 'klaus', name: 'Klaus Mueller', x: 18, y: 1, icon: 'K', color: '#6f42c1', currentAction: 'At home', home: {x: 18, y: 1}, destination: null, path: [], pathIndex: 0, isMoving: false, state: 'idle', actionEndTime: 0 }
+    { id: 'emily', name: 'Emily Carter', x: 3, y: 14, icon: 'EC', color: '#FF69B4', currentAction: 'At home', home: {x: 3, y: 14}, destination: null, path: [], pathIndex: 0, isMoving: false, state: 'idle', actionEndTime: 0 }, // Pink
+    { id: 'sophia', name: 'Sophia Reyes', x: 3, y: 6, icon: 'SR', color: '#8A2BE2', currentAction: 'At home', home: {x: 3, y: 6}, destination: null, path: [], pathIndex: 0, isMoving: false, state: 'idle', actionEndTime: 0 }, // Blue Violet
+    { id: 'mia', name: 'Mia Bennett', x: 24, y: 14, icon: 'MB', color: '#DAA520', currentAction: 'At home', home: {x: 24, y: 14}, destination: null, path: [], pathIndex: 0, isMoving: false, state: 'idle', actionEndTime: 0 }, // Goldenrod
+
+    { id: 'ryan', name: 'Ryan Cooper', x: 24, y: 1, icon: 'RC', color: '#00CED1', currentAction: 'At home', home: {x: 24, y: 1}, destination: null, path: [], pathIndex: 0, isMoving: false, state: 'idle', actionEndTime: 0 }, // Dark Turquoise
+    { id: 'daniel', name: 'Daniel Park', x: 3, y: 18, icon: 'DP', color: '#FF4500', currentAction: 'At home', home: {x: 3, y: 18}, destination: null, path: [], pathIndex: 0, isMoving: false, state: 'idle', actionEndTime: 0 }, // Orange Red
+    { id: 'lucas', name: 'Lucas Brooks', x: 18, y: 1, icon: 'LB', color: '#32CD32', currentAction: 'At home', home: {x: 18, y: 1}, destination: null, path: [], pathIndex: 0, isMoving: false, state: 'idle', actionEndTime: 0 }  // Lime Green
 ];
 
 const AGENT_COLORS = ['#17a2b8', '#ff6347', '#663399', '#3cb371', '#ffa500', '#00bcd4', '#e91e63']; // More colors for dynamic agents
@@ -538,10 +540,13 @@ function startSimulation() {
                     const potentialCoords = PLACES[targetPlaceId].coords;
                     
                     // Filter for unoccupied cells within the potential coordinates
-                    const unoccupiedCoords = potentialCoords.filter(coord => !isCellOccupied(coord[0], coord[1]));
+                    // Also ensure the cell is traversable
+                    const unoccupiedTraversableCoords = potentialCoords.filter(coord => 
+                        isTraversable(coord[0], coord[1]) && !isCellOccupied(coord[0], coord[1])
+                    );
 
-                    if (unoccupiedCoords.length > 0) {
-                        targetCell = unoccupiedCoords[Math.floor(Math.random() * unoccupiedCoords.length)];
+                    if (unoccupiedTraversableCoords.length > 0) {
+                        targetCell = unoccupiedTraversableCoords[Math.floor(Math.random() * unoccupiedTraversableCoords.length)];
                     }
                     attempts++;
                 }
@@ -579,7 +584,7 @@ function startSimulation() {
                     // No unoccupied cell found in any random place after maxAttempts
                     agent.currentAction = `No available destination found.`;
                     agent.state = 'idle'; // Remain idle
-                    // logSimulation(`${agent.name} could not find an unoccupied destination and remains idle.`);
+                    logSimulation(`${agent.name} could not find an unoccupied destination and remains idle.`);
                 }
             } else if (agent.state === 'moving') {
                 // Agent is moving, take the next step

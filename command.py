@@ -222,5 +222,4 @@ def main():
             print("command.py: No idle agents to command. All agents are either moving or doing actions.")
 
 if __name__ == '__main__':
-    # Ensure python-socketio is installed: pip install python-socketio
     main()

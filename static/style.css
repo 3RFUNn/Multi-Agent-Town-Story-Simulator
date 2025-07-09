@@ -141,7 +141,6 @@ body {
     display: flex;
     flex-direction: column;
     gap: 20px;
-    /* Added for scrolling */
     overflow-y: auto; /* Enable vertical scrolling */
     flex-shrink: 0; /* Prevent panel from shrinking */
 }
@@ -193,8 +192,7 @@ body {
         width: 100%;
         border-left: none;
         border-top: 1px solid #e2e8f0;
-        /* Adjust height for mobile if needed, or let content dictate */
-        max-height: 50vh; /* Example: limit height on mobile to prevent excessive scrolling */
+        max-height: 50vh;
     }
     .grid-cell {
         width: 30px;

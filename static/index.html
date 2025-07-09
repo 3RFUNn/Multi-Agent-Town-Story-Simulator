@@ -9,6 +9,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <!-- Link to external CSS file -->
     <link rel="stylesheet" href="/style.css">
+    <!-- Socket.IO client library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
 </head>
 <body>
     <div id="app-container">
@@ -20,9 +22,14 @@
                     <!-- Grid cells will be dynamically inserted here by JavaScript -->
                 </div>
             </div>
-            <button id="add-agent-btn" class="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-colors">
-                Add New Agent
-            </button>
+            <div class="mt-4 flex gap-4">
+                <button id="add-agent-btn" class="px-6 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-colors">
+                    Add New Agent
+                </button>
+                <button id="pause-resume-btn" class="px-6 py-2 bg-yellow-500 text-white rounded-lg shadow-md hover:bg-yellow-600 transition-colors">
+                    Pause Simulation
+                </button>
+            </div>
         </div>
         <div id="ui-panel">
             <!-- New Agent Selection Panel -->

@@ -168,6 +168,12 @@ def test_connect():
 def test_disconnect():
     print('Client disconnected')
 
+# New: SocketIO event to receive readiness signal from command.py and relay to frontend
+@socketio.on('command_client_ready')
+def handle_command_client_ready():
+    print("App.py received 'command_client_ready' signal from command.py. Relaying to frontend.")
+    emit('command_client_ready', {}, broadcast=True, include_self=False)
+
 if __name__ == '__main__':
     print(f"Serving files from: {STATIC_FOLDER}")
     print("Open your browser and navigate to http://127.0.0.1:5000/")

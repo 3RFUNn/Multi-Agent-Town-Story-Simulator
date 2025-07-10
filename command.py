@@ -148,6 +148,12 @@ def update_agent_state_in_command(data):
         print(f"Added new agent {agent_id} with state {state} at ({x},{y})")
 
 
+@sio.event
+def connect():
+    print('Connected to Flask server.')
+    # NEW: Emit a readiness signal to the app.py (which relays to frontend)
+    sio.emit('command_client_ready')
+
 def send_agent_command(agent_id, start_pos, target_pos, destination_name):
     path = find_path_python(start_pos['x'], start_pos['y'], target_pos['x'], target_pos['y'])
     if path:

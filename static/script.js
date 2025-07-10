@@ -168,6 +168,12 @@ socket.on('set_agent_path', (data) => {
     }
 });
 
+// Listen for command client readiness signal
+socket.on('command_client_ready', () => {
+    logSimulation("Command script is connected and ready. Starting simulation.");
+    startSimulation();
+});
+
 
 // --- Map Rendering ---
 function renderMap() {
@@ -761,10 +767,6 @@ window.onload = function() {
     clearInterval(simulationInterval);
     clearInterval(agentTickInterval);
 
-    setTimeout(() => {
-        startSimulation();
-        logSimulation("Simulation started. Agents are waiting for commands.");
-    }, 1000);
 
     addAgentBtn.addEventListener('click', addRandomAgent);
     pauseResumeBtn.addEventListener('click', toggleSimulationPause);

@@ -22,7 +22,7 @@ MAP_LAYOUT = [
     ['G', 'P', 'G', 'K', 'K', 'K', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'G'],
     ['G', 'P', 'G', 'K', 'K', 'K', 'P', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G'],
     ['G', 'P', 'G', 'K', 'K', 'K', 'P', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G'],
-    ['G', 'P', 'G', 'P', 'P', 'P', 'P', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G'],
+    ['G', 'P', 'G', 'H', 'H', 'H', 'P', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G'], # Changed P to H for (3,13) to (5,13)
     ['G', 'P', 'G', 'H', 'H', 'H', 'P', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G'],
     ['G', 'P', 'G', 'H', 'H', 'H', 'P', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G'],
     ['G', 'P', 'P', 'P', 'P', 'P', 'P', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G'],
@@ -44,15 +44,11 @@ PLACES = {
     'college_oak_hill': {'type': 'College', 'name': 'Oak Hill College', 'coords': [[18,1],[19,1],[20,1],[21,1],[22,1],[18,2],[19,2],[20,2],[21,2],[22,2],[18,3],[19,3],[20,3],[21,3],[22,3]]},
     'grocery_pharmacy_willow': {'type': 'Grocery & Pharmacy', 'name': 'Willow Market and Pharmacy', 'coords': [[7,8],[8,8],[9,8],[10,8],[11,8],[7,9],[8,9],[9,9],[10,9],[11,9]]},
     'johnson_park': {'type': 'Park', 'name': 'Johnson Park', 'coords': [[3,10],[4,10],[5,10],[3,11],[4,11],[5,11],[3,12],[4,12],[5,12]]},
-    'houses_south_west_1': {'type': 'Houses', 'name': 'South West Houses 1', 'coords': [[3,14],[4,14],[5,14],[3,15],[4,15],[5,15]]},
-    'houses_south_west_2': {'type': 'Houses', 'name': 'South West Houses 2', 'coords': [[1,12],[2,12],[1,13],[2,13]]},
-    'houses_north_east_1': {'type': 'Houses', 'name': 'North East Houses 1', 'coords': [[24,1],[25,1],[26,1],[27,1],[28,1]]},
-    'houses_north_east_2': {'type': 'Houses', 'name': 'North East Houses 2', 'coords': [[24,14],[25,14],[26,14],[27,14],[28,14]]},
-    'houses_central_1': {'type': 'Houses', 'name': 'Central Houses 1', 'coords': [[14,5],[15,5],[16,5],[14,6],[15,6],[16,6]]},
+    'main_house': {'type': 'House', 'name': 'Main House Area', 'coords': [[3,13],[4,13],[5,13],[3,14],[4,14],[5,14],[3,15],[4,15],[5,15]]}, # Consolidated house area
     'college_dorm_main': {'type': 'College Dorm', 'name': 'Main College Dorm', 'coords': [[3,18],[4,18],[5,18],[3,19],[4,19],[5,19]]},
 }
 
-# Initial agent data (must be consistent with script.js and app.py)
+# Initial agent data (must be consistent with script.js and command.py)
 AGENTS_INITIAL_STATE = [
     {'id': 'emily', 'name': 'Emily Carter', 'x': 3, 'y': 14, 'icon': 'EC', 'color': '#FF69B4', 'currentAction': 'At home', 'home': {'x': 3, 'y': 14}, 'destination': None, 'path': [], 'pathIndex': 0, 'isMoving': False, 'state': 'idle', 'actionEndTime': 0},
     {'id': 'sophia', 'name': 'Sophia Reyes', 'x': 3, 'y': 6, 'icon': 'SR', 'color': '#8A2BE2', 'currentAction': 'At home', 'home': {'x': 3, 'y': 6}, 'destination': None, 'path': [], 'pathIndex': 0, 'isMoving': False, 'state': 'idle', 'actionEndTime': 0},
@@ -120,15 +116,15 @@ agent_current_states = {agent['id']: {'x': agent['x'], 'y': agent['y'], 'state':
 
 @sio.event
 def connect():
-    print('command.py connected to Flask server!')
+    print('Connected to Flask server.')
 
 @sio.event
 def connect_error(data):
-    print("command.py connection failed:", data)
+    print("Connection failed:", data)
 
 @sio.event
 def disconnect():
-    print('command.py disconnected from Flask server.')
+    print('Disconnected from Flask server.')
 
 @sio.event
 def log_message(data):
@@ -145,11 +141,11 @@ def update_agent_state_in_command(data):
         agent_current_states[agent_id]['state'] = state
         agent_current_states[agent_id]['x'] = x
         agent_current_states[agent_id]['y'] = y
-        print(f"command.py: Updated state for {agent_id} to {state} at ({x},{y})")
+        print(f"State update for {agent_id}: {state} at ({x},{y})")
     else:
         # Handle newly added agents
         agent_current_states[agent_id] = {'x': x, 'y': y, 'state': state}
-        print(f"command.py: Added new agent {agent_id} with state {state} at ({x},{y})")
+        print(f"Added new agent {agent_id} with state {state} at ({x},{y})")
 
 
 def send_agent_command(agent_id, start_pos, target_pos, destination_name):
@@ -163,22 +159,22 @@ def send_agent_command(agent_id, start_pos, target_pos, destination_name):
                 'destinationName': destination_name,
                 'path': path # Send the calculated path
             })
-            print(f"command.py: Commanded agent {agent_id} to go to {destination_name}")
+            print(f"Action: Agent {agent_id} is moving to {destination_name}")
             return True
         except Exception as e:
-            print(f"command.py: Error sending command for {agent_id}: {e}")
+            print(f"Error sending command for {agent_id}: {e}")
             return False
     else:
-        print(f"command.py: No path found for {agent_id} from {start_pos} to {target_pos}")
+        print(f"No path found for {agent_id} from {start_pos} to {target_pos}")
         return False
 
 # --- Main Command Logic Loop ---
 def main():
     try:
         sio.connect(FLASK_SERVER_URL)
-        print(f"command.py: Attempting to connect to {FLASK_SERVER_URL}")
+        print(f"Attempting to connect to {FLASK_SERVER_URL}")
     except Exception as e:
-        print(f"command.py: Could not connect to Flask server at {FLASK_SERVER_URL}: {e}")
+        print(f"Could not connect to Flask server at {FLASK_SERVER_URL}: {e}")
         print("Please ensure app.py is running in a separate terminal.")
         return
 
@@ -215,11 +211,11 @@ def main():
                     agent_current_states[agent_id]['state'] = 'moving' # Optimistic update
                     # The actual position will be updated by frontend's agent_state_update when it moves
                 else:
-                    print(f"command.py: Failed to command {agent_id}, retrying next tick.")
+                    print(f"Failed to command {agent_id}.")
             else:
-                print(f"command.py: No valid traversable destination cell found for {agent_id} in {PLACES[random_place_id]['name']}")
+                print(f"No valid traversable destination cell found for {agent_id} in {PLACES[random_place_id]['name']}.")
         else:
-            print("command.py: No idle agents to command. All agents are either moving or doing actions.")
+            print("No idle agents to command. All agents are either moving or doing actions.")
 
 if __name__ == '__main__':
     main()

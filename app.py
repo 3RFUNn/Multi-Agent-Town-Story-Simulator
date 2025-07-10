@@ -32,7 +32,7 @@ MAP_LAYOUT = [
     ['G', 'P', 'G', 'K', 'K', 'K', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'G'],
     ['G', 'P', 'G', 'K', 'K', 'K', 'P', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G'],
     ['G', 'P', 'G', 'K', 'K', 'K', 'P', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G'],
-    ['G', 'P', 'G', 'P', 'P', 'P', 'P', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G'],
+    ['G', 'P', 'G', 'H', 'H', 'H', 'P', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G'], # Changed P to H for (3,13) to (5,13)
     ['G', 'P', 'G', 'H', 'H', 'H', 'P', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G'],
     ['G', 'P', 'G', 'H', 'H', 'H', 'P', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G'],
     ['G', 'P', 'P', 'P', 'P', 'P', 'P', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G'],
@@ -54,11 +54,7 @@ PLACES = {
     'college_oak_hill': {'type': 'College', 'name': 'Oak Hill College', 'coords': [[18,1],[19,1],[20,1],[21,1],[22,1],[18,2],[19,2],[20,2],[21,2],[22,2],[18,3],[19,3],[20,3],[21,3],[22,3]]},
     'grocery_pharmacy_willow': {'type': 'Grocery & Pharmacy', 'name': 'Willow Market and Pharmacy', 'coords': [[7,8],[8,8],[9,8],[10,8],[11,8],[7,9],[8,9],[9,9],[10,9],[11,9]]},
     'johnson_park': {'type': 'Park', 'name': 'Johnson Park', 'coords': [[3,10],[4,10],[5,10],[3,11],[4,11],[5,11],[3,12],[4,12],[5,12]]},
-    'houses_south_west_1': {'type': 'Houses', 'name': 'South West Houses 1', 'coords': [[3,14],[4,14],[5,14],[3,15],[4,15],[5,15]]},
-    'houses_south_west_2': {'type': 'Houses', 'name': 'South West Houses 2', 'coords': [[1,12],[2,12],[1,13],[2,13]]},
-    'houses_north_east_1': {'type': 'Houses', 'name': 'North East Houses 1', 'coords': [[24,1],[25,1],[26,1],[27,1],[28,1]]},
-    'houses_north_east_2': {'type': 'Houses', 'name': 'North East Houses 2', 'coords': [[24,14],[25,14],[26,14],[27,14],[28,14]]},
-    'houses_central_1': {'type': 'Houses', 'name': 'Central Houses 1', 'coords': [[14,5],[15,5],[16,5],[14,6],[15,6],[16,6]]},
+    'main_house': {'type': 'House', 'name': 'Main House Area', 'coords': [[3,13],[4,13],[5,13],[3,14],[4,14],[5,14],[3,15],[4,15],[5,15]]}, # Consolidated house area
     'college_dorm_main': {'type': 'College Dorm', 'name': 'Main College Dorm', 'coords': [[3,18],[4,18],[5,18],[3,19],[4,19],[5,19]]},
 }
 

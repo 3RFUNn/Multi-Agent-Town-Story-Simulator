@@ -76,13 +76,13 @@ for (const placeId in PLACES) {
 
 // Initial agent data with home locations
 let AGENTS = [
-    { id: 'emily', name: 'Emily Carter', x: 3, y: 14, icon: 'EC', color: '#FF69B4', currentAction: 'At home', home: {x: 3, y: 14}, destination: null, path: [], pathIndex: 0, isMoving: false, state: 'idle', actionEndTime: 0 }, // Pink
-    { id: 'sophia', name: 'Sophia Reyes', x: 3, y: 6, icon: 'SR', color: '#8A2BE2', currentAction: 'At home', home: {x: 3, y: 6}, destination: null, path: [], pathIndex: 0, isMoving: false, state: 'idle', actionEndTime: 0 }, // Blue Violet
-    { id: 'mia', name: 'Mia Bennett', x: 24, y: 14, icon: 'MB', color: '#DAA520', currentAction: 'At home', home: {x: 24, y: 14}, destination: null, path: [], pathIndex: 0, isMoving: false, state: 'idle', actionEndTime: 0 }, // Goldenrod
+    { id: 'emily', name: 'Emily Carter', x: 3, y: 14, icon: 'EC', color: '#FF69B4', currentAction: 'At home', home: {x: 3, y: 14}, destination: null, path: [], pathIndex: 0, isMoving: false, state: 'idle', actionEndTime: 0, individualLog: [] }, // Pink
+    { id: 'sophia', name: 'Sophia Reyes', x: 3, y: 6, icon: 'SR', color: '#8A2BE2', currentAction: 'At home', home: {x: 3, y: 6}, destination: null, path: [], pathIndex: 0, isMoving: false, state: 'idle', actionEndTime: 0, individualLog: [] }, // Blue Violet
+    { id: 'mia', name: 'Mia Bennett', x: 24, y: 14, icon: 'MB', color: '#DAA520', currentAction: 'At home', home: {x: 24, y: 14}, destination: null, path: [], pathIndex: 0, isMoving: false, state: 'idle', actionEndTime: 0, individualLog: [] }, // Goldenrod
 
-    { id: 'ryan', name: 'Ryan Cooper', x: 24, y: 1, icon: 'RC', color: '#00CED1', currentAction: 'At home', home: {x: 24, y: 1}, destination: null, path: [], pathIndex: 0, isMoving: false, state: 'idle', actionEndTime: 0 }, // Dark Turquoise
-    { id: 'daniel', name: 'Daniel Park', x: 3, y: 18, icon: 'DP', color: '#FF4500', currentAction: 'At home', home: {x: 3, y: 18}, destination: null, path: [], pathIndex: 0, isMoving: false, state: 'idle', actionEndTime: 0 }, // Orange Red
-    { id: 'lucas', name: 'Lucas Brooks', x: 18, y: 1, icon: 'LB', color: '#32CD32', currentAction: 'At home', home: {x: 18, y: 1}, destination: null, path: [], pathIndex: 0, isMoving: false, state: 'idle', actionEndTime: 0 }  // Lime Green
+    { id: 'ryan', name: 'Ryan Cooper', x: 24, y: 1, icon: 'RC', color: '#00CED1', currentAction: 'At home', home: {x: 24, y: 1}, destination: null, path: [], pathIndex: 0, isMoving: false, state: 'idle', actionEndTime: 0, individualLog: [] }, // Dark Turquoise
+    { id: 'daniel', name: 'Daniel Park', x: 3, y: 18, icon: 'DP', color: '#FF4500', currentAction: 'At home', home: {x: 3, y: 18}, destination: null, path: [], pathIndex: 0, isMoving: false, state: 'idle', actionEndTime: 0, individualLog: [] }, // Orange Red
+    { id: 'lucas', name: 'Lucas Brooks', x: 18, y: 1, icon: 'LB', color: '#32CD32', currentAction: 'At home', home: {x: 18, y: 1}, destination: null, path: [], pathIndex: 0, isMoving: false, state: 'idle', actionEndTime: 0, individualLog: [] }  // Lime Green
 ];
 
 const AGENT_COLORS = ['#17a2b8', '#ff6347', '#663399', '#3cb371', '#ffa500', '#00bcd4', '#e91e63']; // More colors for dynamic agents
@@ -91,17 +91,20 @@ let nextAgentIdCounter = AGENTS.length;
 // --- DOM Elements ---
 const gameGridWrapper = document.getElementById('game-grid-wrapper');
 const gameGridContainer = document.getElementById('game-grid-container');
+const mainLogTitle = document.getElementById('main-log-title'); // New: Main Log Title
 const logOutput = document.getElementById('log-output');
+const inspectorTitle = document.getElementById('inspector-title'); // New: Inspector Title
 const inspectorOutput = document.getElementById('inspector-output');
 const simulationTimeDisplay = document.getElementById('simulation-time');
 const addAgentBtn = document.getElementById('add-agent-btn');
-const pauseResumeBtn = document.getElementById('pause-resume-btn'); // Pause/Resume button
+const pauseResumeBtn = document.getElementById('pause-resume-btn');
 const agentSelectionPanel = document.getElementById('agent-selection-panel');
 
 let simulationDay = 1;
 let simulationHour = 9;
 let simulationMinute = 0;
 let isSimulationPaused = false;
+let currentViewedAgentLog = null; // Stores the ID of the agent whose individual log is being viewed
 
 // --- Socket.IO Connection ---
 const socket = io();
@@ -129,23 +132,22 @@ socket.on('set_agent_path', (data) => {
     const agent = AGENTS.find(a => a.id === data.agentId);
     if (agent) {
         agent.path = data.path;
-        agent.pathIndex = 0; // Start from the first step in the received path
+        agent.pathIndex = 0;
         agent.destination = { x: data.path[data.path.length - 1][0], y: data.path[data.path.length - 1][1] };
         
         if (agent.path.length > 1) {
             agent.isMoving = true;
             agent.state = 'moving';
             agent.currentAction = `Heading to ${data.destinationName || 'a new place'}`;
-            logSimulation(`${agent.name} received command from Python: Heading to ${data.destinationName || 'a new place'}.`);
+            logSimulation(`${agent.name} received command from Python: Heading to ${data.destinationName || 'a new place'}.`, agent.id); // Log to individual
         } else if (agent.path.length === 1 && agent.x === agent.destination.x && agent.y === agent.destination.y) {
             agent.isMoving = false;
             agent.state = 'doing_action';
-            const actionDurationMinutes = Math.floor(Math.random() * 31) + 30; // 30-60 min action
+            const actionDurationMinutes = Math.floor(Math.random() * 31) + 30;
             agent.actionEndTime = getCurrentSimulationMinutes() + actionDurationMinutes;
             const placeAtDestination = map_place_ids[agent.y][agent.x] ? PLACES[map_place_ids[agent.y][agent.x]].name : `(${agent.x},${agent.y})`;
             agent.currentAction = `Arrived at ${placeAtDestination} and is now performing an action.`;
-            logSimulation(`${agent.name} received command from Python: Already at ${placeAtDestination}, now doing action.`);
-            // Send state update to backend
+            logSimulation(`${agent.name} received command from Python: Already at ${placeAtDestination}, now doing action.`, agent.id); // Log to individual
             socket.emit('agent_state_update', {
                 agentId: agent.id,
                 state: agent.state,
@@ -156,8 +158,7 @@ socket.on('set_agent_path', (data) => {
             agent.destination = null;
             agent.currentAction = `Stuck (Python command failed)`;
             agent.state = 'idle';
-            logSimulation(`${agent.name} received command from Python but no valid path found.`);
-            // Send state update to backend
+            logSimulation(`${agent.name} received command from Python but no valid path found.`, agent.id); // Log to individual
             socket.emit('agent_state_update', {
                 agentId: agent.id,
                 state: agent.state,
@@ -215,7 +216,7 @@ function placeAgents() {
             agentDiv.dataset.agentId = agent.id;
             agentDiv.addEventListener('click', (event) => {
                 event.stopPropagation();
-                inspectAgent(agent.id);
+                toggleAgentLogView(agent.id); // Changed to toggle
             });
             cell.appendChild(agentDiv);
         }
@@ -234,8 +235,7 @@ function moveAgentStep(agent) {
             agent.path = [];
             agent.state = 'idle';
             agent.currentAction = `Waiting for clear path at (${oldX},${oldY})`;
-            logSimulation(`${agent.name} waiting: path to (${nextX},${nextY}) is blocked.`);
-            // Send state update to backend
+            logSimulation(`${agent.name} waiting: path to (${nextX},${nextY}) is blocked.`, agent.id); // Log to individual
             socket.emit('agent_state_update', {
                 agentId: agent.id,
                 state: agent.state,
@@ -245,6 +245,7 @@ function moveAgentStep(agent) {
             return;
         }
 
+
         agent.x = nextX;
         agent.y = nextY;
 
@@ -253,13 +254,13 @@ function moveAgentStep(agent) {
 
         if (agentDiv && newCell) {
             newCell.appendChild(agentDiv);
-            logSimulation(`${agent.name} moved to (${nextX},${nextY}).`);
+            logSimulation(`${agent.name} moved to (${nextX},${nextY}).`, agent.id); // Log to individual
         } else {
             console.error(`Failed to move agent ${agent.id} to (${nextX},${nextY}). Cell or agentDiv not found.`);
             agent.isMoving = false;
             agent.path = [];
             agent.state = 'idle';
-            // Send state update to backend
+            logSimulation(`${agent.name} encountered an error moving to (${nextX},${nextY}).`, agent.id); // Log to individual
             socket.emit('agent_state_update', {
                 agentId: agent.id,
                 state: agent.state,
@@ -280,8 +281,7 @@ function moveAgentStep(agent) {
 
             const placeAtDestination = map_place_ids[agent.y][agent.x] ? PLACES[map_place_ids[agent.y][agent.x]].name : `(${agent.x},${agent.y})`;
             agent.currentAction = `Relaxing at ${placeAtDestination}`;
-            logSimulation(`${agent.name} arrived at ${placeAtDestination} and is now ${agent.currentAction}.`);
-            // Send state update to backend
+            logSimulation(`${agent.name} arrived at ${placeAtDestination} and is now ${agent.currentAction}.`, agent.id); // Log to individual
             socket.emit('agent_state_update', {
                 agentId: agent.id,
                 state: agent.state,
@@ -293,7 +293,7 @@ function moveAgentStep(agent) {
         agent.isMoving = false;
         agent.path = [];
         agent.state = 'idle';
-        // Send state update to backend
+        logSimulation(`${agent.name} finished its path or had no path. Now idle.`, agent.id); // Log to individual
         socket.emit('agent_state_update', {
             agentId: agent.id,
             state: agent.state,
@@ -321,14 +321,14 @@ function addRandomAgent() {
         pathIndex: 0,
         isMoving: false,
         state: 'idle',
-        actionEndTime: 0
+        actionEndTime: 0,
+        individualLog: [] // Initialize individual log for new agent
     };
     AGENTS.push(newAgent);
     placeAgents();
-    inspectAgent(newAgentId);
-    logSimulation(`New agent ${newAgent.name} added at (${randomX},${randomY}).`);
+    toggleAgentLogView(newAgentId); // View new agent's log
+    logSimulation(`New agent ${newAgent.name} added at (${randomX},${randomY}).`, newAgent.id); // Log to individual
     nextAgentIdCounter++;
-    // Send state update for new agent to backend
     socket.emit('agent_state_update', {
         agentId: newAgent.id,
         state: newAgent.state,
@@ -338,8 +338,6 @@ function addRandomAgent() {
 }
 
 // --- Pathfinding (BFS) ---
-// Note: This findPath is primarily for initial agent placement/fallback if needed.
-// The main pathfinding is now done in command.py
 function isValid(x, y) {
     return x >= 0 && x < MAP_COLS && y >= 0 && y < MAP_ROWS;
 }
@@ -433,16 +431,61 @@ function updateSimulationTime() {
 }
 
 // --- Logging & Inspector ---
-let selectedAgentId = null;
+let selectedAgentId = null; // Currently selected agent for inspector/individual log view
+const mainSimulationLog = []; // Stores the full main log
 
-function logSimulation(message) {
-    const logEntry = document.createElement('p');
-    logEntry.innerHTML = `<span class="font-mono text-gray-500">[Day ${simulationDay}, ${simulationHour}:${simulationMinute < 10 ? '0' : ''}${simulationMinute}]</span> ${message}`;
-    logOutput.prepend(logEntry);
-    if (logOutput.children.length > 50) {
-        logOutput.removeChild(logOutput.lastChild);
+function logSimulation(message, agentId = null) {
+    const timestamp = `[Day ${simulationDay}, ${simulationHour}:${simulationMinute < 10 ? '0' : ''}${simulationMinute}]`;
+    const fullMessage = `${timestamp} ${message}`;
+
+    // Add to main log
+    mainSimulationLog.unshift(fullMessage); // Add to the top
+    if (mainSimulationLog.length > 100) { // Keep main log from getting too long
+        mainSimulationLog.pop();
     }
+    
+    // Add to individual agent log if agentId is provided
+    if (agentId) {
+        const agent = AGENTS.find(a => a.id === agentId);
+        if (agent) {
+            agent.individualLog.unshift(fullMessage);
+            if (agent.individualLog.length > 50) { // Keep individual log shorter
+                agent.individualLog.pop();
+            }
+        }
+    }
+
+    // Update the displayed log based on current view
+    updateLogDisplay();
 }
+
+function updateLogDisplay() {
+    logOutput.innerHTML = ''; // Clear current display
+    let logToDisplay = [];
+
+    if (currentViewedAgentLog) {
+        const agent = AGENTS.find(a => a.id === currentViewedAgentLog);
+        if (agent) {
+            logToDisplay = agent.individualLog;
+            mainLogTitle.textContent = `Log: ${agent.name}`;
+        } else {
+            // Agent no longer exists or ID is invalid, revert to main log
+            currentViewedAgentLog = null;
+            logToDisplay = mainSimulationLog;
+            mainLogTitle.textContent = `Simulation Log`;
+        }
+    } else {
+        logToDisplay = mainSimulationLog;
+        mainLogTitle.textContent = `Simulation Log`;
+    }
+
+    logToDisplay.forEach(msg => {
+        const logEntry = document.createElement('p');
+        logEntry.innerHTML = msg; // Message already contains timestamp
+        logOutput.appendChild(logEntry); // Append for chronological order in display
+    });
+}
+
 
 let lastHighlightedCells = [];
 
@@ -453,11 +496,13 @@ function clearHighlight() {
 
 function inspectMapCell(x, y) {
     clearHighlight();
-    selectedAgentId = null;
+    selectedAgentId = null; // Deselect agent for inspector view
+    currentViewedAgentLog = null; // Revert to main log view
 
     const placeId = map_place_ids[y][x];
     if (placeId && PLACES[placeId]) {
         const place = PLACES[placeId];
+        inspectorTitle.textContent = `Inspector: ${place.name}`;
         inspectorOutput.innerHTML = `
             <p><span class="font-semibold text-gray-700">Type:</span> ${place.type}</p>
             <p><span class="font-semibold text-gray-700">Name:</span> ${place.name}</p>
@@ -471,21 +516,25 @@ function inspectMapCell(x, y) {
                 lastHighlightedCells.push(cell);
             }
         });
-        logSimulation(`Inspected map cell (${x},${y}): ${place.name}.`);
+        logSimulation(`Inspected map cell (${x},${y}): ${place.name}.`); // Log to main
     } else {
+        inspectorTitle.textContent = `Inspector`;
         inspectorOutput.innerHTML = `<p class="text-gray-500">No named place at (${x},${y}).</p>`;
-        logSimulation(`Inspected map cell (${x},${y}): No named place.`);
+        logSimulation(`Inspected map cell (${x},${y}): No named place.`); // Log to main
     }
+    // Clear agent visual highlights and selection panel highlights
     document.querySelectorAll('.agent-avatar').forEach(div => div.classList.remove('ring-2', 'ring-blue-500'));
     document.querySelectorAll('#agent-selection-panel button').forEach(btn => btn.classList.remove('ring-2', 'ring-blue-500', 'bg-blue-100'));
+    updateLogDisplay(); // Refresh log to main view
 }
 
 function inspectAgent(agentId) {
     clearHighlight();
-    selectedAgentId = agentId;
-
+    selectedAgentId = agentId; // Set selected agent for inspector view
+    
     const agent = AGENTS.find(a => a.id === agentId);
     if (agent) {
+        inspectorTitle.textContent = `Inspector: ${agent.name}`;
         inspectorOutput.innerHTML = `
             <p><span class="font-semibold text-gray-700">Name:</span> ${agent.name}</p>
             <p><span class="font-semibold text-gray-700">Location:</span> (${agent.x}, ${agent.y})</p>
@@ -493,20 +542,44 @@ function inspectAgent(agentId) {
             <p><span class="font-semibold text-gray-700">Current Action:</span> ${agent.currentAction}</p>
             ${agent.destination ? `<p><span class="font-semibold text-gray-700">Destination:</span> (${agent.destination.x}, ${agent.destination.y})</p>` : ''}
         `;
+        // Highlight agent avatar on map
         document.querySelectorAll('.agent-avatar').forEach(div => div.classList.remove('ring-2', 'ring-blue-500'));
         const agentAvatar = document.getElementById(`agent-${agentId}`);
         if (agentAvatar) {
             agentAvatar.classList.add('ring-2', 'ring-blue-500');
         }
+        // Highlight agent in selection panel
         document.querySelectorAll('#agent-selection-panel button').forEach(btn => btn.classList.remove('ring-2', 'ring-blue-500', 'bg-blue-100'));
         const selectedBtn = document.querySelector(`#agent-selection-panel button[data-agent-id="${agentId}"]`);
         if (selectedBtn) {
             selectedBtn.classList.add('ring-2', 'ring-blue-500', 'bg-blue-100');
         }
 
-        logSimulation(`Inspected Agent: ${agent.name}.`);
+        logSimulation(`Inspected Agent: ${agent.name}.`); // Log to main
+        currentViewedAgentLog = agentId; // Set individual log view
+        updateLogDisplay(); // Refresh log to individual view
     }
 }
+
+// New function to toggle individual agent log view
+function toggleAgentLogView(agentId) {
+    if (currentViewedAgentLog === agentId) {
+        // If already viewing this agent's log, revert to main log
+        currentViewedAgentLog = null;
+        selectedAgentId = null; // Also deselect for inspector
+        clearHighlight(); // Clear map highlight
+        // Clear agent visual highlights and selection panel highlights
+        document.querySelectorAll('.agent-avatar').forEach(div => div.classList.remove('ring-2', 'ring-blue-500'));
+        document.querySelectorAll('#agent-selection-panel button').forEach(btn => btn.classList.remove('ring-2', 'ring-blue-500', 'bg-blue-100'));
+        inspectorTitle.textContent = `Inspector`;
+        inspectorOutput.innerHTML = `<p class="text-gray-500">Click on an agent or a map cell.</p>`;
+        updateLogDisplay(); // Show main log
+    } else {
+        // View this agent's log
+        inspectAgent(agentId); // This will set currentViewedAgentLog and update display
+    }
+}
+
 
 function renderAgentSelectionPanel() {
     agentSelectionPanel.innerHTML = '<h2 class="text-xl font-semibold text-gray-800 w-full text-center mb-2">Agents</h2>';
@@ -521,7 +594,7 @@ function renderAgentSelectionPanel() {
         agentBtn.dataset.agentId = agent.id;
         agentBtn.innerHTML = `<span class="text-white">${agent.icon}</span> ${agent.name}`;
 
-        agentBtn.addEventListener('click', () => inspectAgent(agent.id));
+        agentBtn.addEventListener('click', () => toggleAgentLogView(agent.id)); // Changed to toggle
         agentSelectionPanel.appendChild(agentBtn);
 
         if (agent.id === selectedAgentId) {
@@ -620,22 +693,18 @@ function isCellOccupied(x, y, excludeAgentId = null) {
 }
 
 function startSimulation() {
-    // Clear any existing intervals to prevent duplicates if startSimulation is called again
     if (simulationInterval) clearInterval(simulationInterval);
     if (agentTickInterval) clearInterval(agentTickInterval);
 
-    simulationInterval = setInterval(updateSimulationTime, 1000); // Update time every 1 real second
+    simulationInterval = setInterval(updateSimulationTime, 1000);
 
     agentTickInterval = setInterval(() => {
-        if (isSimulationPaused) return; // Only run agent logic if not paused
+        if (isSimulationPaused) return;
 
         AGENTS.forEach(agent => {
             const currentSimMinutes = getCurrentSimulationMinutes();
 
             if (agent.state === 'idle') {
-                // Agent is idle, it waits for a command from Python.
-                // It will NOT generate local random paths anymore.
-                // The 'command_agent_from_python' SocketIO event is the only way to set its path.
                 agent.currentAction = `Waiting for Python command...`;
             } else if (agent.state === 'moving') {
                 moveAgentStep(agent);
@@ -643,8 +712,7 @@ function startSimulation() {
                 if (currentSimMinutes >= agent.actionEndTime) {
                     agent.state = 'idle';
                     agent.currentAction = `Finished action at (${agent.x},${agent.y}). Waiting for command...`;
-                    logSimulation(`${agent.name} finished its action and is now idle.`);
-                    // Send state update to backend
+                    logSimulation(`${agent.name} finished its action and is now idle.`, agent.id); // Log to individual
                     socket.emit('agent_state_update', {
                         agentId: agent.id,
                         state: agent.state,
@@ -657,7 +725,7 @@ function startSimulation() {
                 inspectAgent(agent.id);
             }
         });
-    }, 500); // Agent logic tick every 0.5 real seconds
+    }, 500);
 }
 
 // --- Pause/Resume Functionality ---
@@ -682,7 +750,6 @@ window.onload = function() {
     renderMap();
     placeAgents();
 
-    // Ensure intervals are cleared if page is reloaded without full refresh
     clearInterval(simulationInterval);
     clearInterval(agentTickInterval);
 
@@ -692,5 +759,5 @@ window.onload = function() {
     }, 1000);
 
     addAgentBtn.addEventListener('click', addRandomAgent);
-    pauseResumeBtn.addEventListener('click', toggleSimulationPause); // Attach pause button listener
+    pauseResumeBtn.addEventListener('click', toggleSimulationPause);
 };

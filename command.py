@@ -14,7 +14,6 @@ sio = socketio.Client()
 @sio.event
 def connect():
     print('Connected to Flask server as command client.')
-    # Signal readiness to the main app, so it can start the frontend simulation
     sio.emit('command_client_ready')
 
 @sio.event
@@ -29,27 +28,24 @@ def disconnect():
 def run_simulation():
     """Initializes the manager and runs the main simulation loop."""
     print("Initializing Agent Manager...")
-    # The manager now holds all the agents and the world layout
     manager = AgentManager(world_layout=MAP_LAYOUT)
     print("Agent Manager initialized. Starting simulation loop.")
 
-    simulation_tick_interval = 1.0 # seconds per simulation tick
+    simulation_tick_interval = 1.0 # 1 second per simulation tick
 
     while True:
         try:
-            # 1. Run one tick of the simulation engine
-            commands, agent_states = manager.tick()
+            # 1. Run one tick of the simulation engine.
+            # manager.tick() now returns a single payload dictionary.
+            commands, state_payload = manager.tick()
 
-            # 2. Send the updated agent states to the frontend
-            if agent_states:
-                sio.emit('simulation_state_update', {'agents': agent_states})
+            # 2. Send the updated state payload to the frontend.
+            # *** FIX: Emit the payload directly, not nested inside another dict. ***
+            if state_payload:
+                sio.emit('simulation_state_update', state_payload)
 
-            # 3. Send any generated low-level commands to the frontend
-            # (Currently this is just 'move', but could include 'interact', etc.)
-            if commands:
-                sio.emit('execute_commands', {'commands': commands})
+            # (Command execution logic can be added here later)
 
-            # Wait for the next tick
             time.sleep(simulation_tick_interval)
 
         except KeyboardInterrupt:
@@ -63,6 +59,8 @@ def run_simulation():
 
 def main():
     try:
+        # It's good practice to install websocket-client for better performance
+        # pip install "python-socketio[client]"
         sio.connect(FLASK_SERVER_URL)
         run_simulation()
     except socketio.exceptions.ConnectionError as e:

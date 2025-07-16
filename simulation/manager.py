@@ -5,7 +5,6 @@ from .entities import Agent
 from .config import AGENT_CONFIG, PLACES, ACTIVITY_LOCATIONS
 from behavior.agent_behaviors import create_agent_bt
 
-# (The find_path_bfs function remains the same as before)
 def find_path_bfs(start_x, start_y, target_x, target_y, world_layout):
     rows, cols = len(world_layout), len(world_layout[0])
     queue = [((start_x, start_y), [(start_x, start_y)])]
@@ -45,9 +44,18 @@ class AgentManager:
 
     def tick(self):
         """The main simulation loop tick."""
+        # *** FIX: Time is advanced here, once per tick. ***
+        hour, minute = self.world_state['time']
+        minute += 10 # 1 tick = 10 simulation minutes
+        if minute >= 60:
+            minute = 0
+            hour = (hour + 1) % 24
+        self.world_state['time'] = (hour, minute)
+
         occupied_positions = { (agent.x, agent.y) for agent in self.agents.values() }
 
         for agent in self.agents.values():
+            # (Agent logic remains the same)
             if agent.state == 'doing_action':
                 agent.action_duration -= 1
                 if agent.action_duration <= 0:
@@ -58,28 +66,22 @@ class AgentManager:
                 agent.behavior_tree.tick(agent, self.world_state)
 
             if agent.state == 'moving':
-                # *** FIX: Collision Avoidance and Target Selection Logic ***
                 if not agent.path or agent.path_index >= len(agent.path):
                     location_name = agent.destination_name
                     target_location = self.world_state['places'].get(location_name)
-                    
                     if target_location:
-                        available_spots = [
-                            pos for pos in target_location['coords'] 
-                            if pos not in occupied_positions
-                        ]
-                        
+                        available_spots = [pos for pos in target_location['coords'] if pos not in occupied_positions]
                         if available_spots:
                             target_pos = random.choice(available_spots)
                             path = find_path_bfs(agent.x, agent.y, target_pos[0], target_pos[1], self.world_layout)
                             agent.path = path
                             agent.path_index = 0
-                            if not path: agent.state = 'idle' # No path found
+                            if not path: agent.state = 'idle'
                         else:
-                            agent.state = 'idle' # Location is full
+                            agent.state = 'idle'
                             agent.current_action = f"Waiting for space at {location_name}"
                     else:
-                        agent.state = 'idle' # Invalid location
+                        agent.state = 'idle'
 
                 if agent.path and agent.path_index < len(agent.path):
                     next_pos = agent.path[agent.path_index]
@@ -89,5 +91,9 @@ class AgentManager:
                         agent.state = 'idle'
                         agent.path = []
 
-        agent_states = [agent.to_dict() for agent in self.agents.values()]
-        return [], agent_states
+        # *** FIX: The current time is now included in the state payload. ***
+        state_payload = {
+            'agents': [agent.to_dict() for agent in self.agents.values()],
+            'time': self.world_state['time']
+        }
+        return [], state_payload

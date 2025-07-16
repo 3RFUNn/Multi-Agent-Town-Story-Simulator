@@ -1,7 +1,7 @@
 // --- Configuration & Global State ---
 const CELL_SIZE = 40;
-let isEngineReady = false; // *** FIX: Time control flag ***
-// (MAP_LAYOUT, CELL_TYPES, PLACES data remains the same as the last complete version)
+let isEngineReady = false;
+// (MAP_LAYOUT and CELL_TYPES data remains the same)
 const MAP_LAYOUT = [
     ['G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G'],
     ['G', 'O', 'O', 'O', 'O', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'L', 'L', 'L', 'L', 'L', 'P', 'P', 'P', 'P', 'P', 'P', 'G'],
@@ -26,6 +26,7 @@ const MAP_LAYOUT = [
     ['G', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'G'],
     ['G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G']
 ];
+// *** FIX: Moved these definitions up to be available for map_place_ids. ***
 const MAP_ROWS = MAP_LAYOUT.length;
 const MAP_COLS = MAP_LAYOUT[0].length;
 const CELL_TYPES = {
@@ -41,30 +42,27 @@ const CELL_TYPES = {
     'O': { class: 'co_living', icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>' }
 };
 const PLACES = {
-    'co_living_space': { type: 'Co-Living Space', coords: [[1,1], [2,1], [3,1], [4,1], [1,2], [2,2], [3,2], [4,2]]},
-    'bar_hobbs': { type: 'Bar', coords: [[7,3], [8,3], [7,4], [8,4]]},
-    'cafe_hobbs': { type: 'Cafe', coords: [[3,6], [4,6], [3,7], [4,7]]},
-    'supply_store_harvey': { type: 'Supply Store', coords: [[6,1], [7,1], [6,2], [7,2]]},
-    'college_oak_hill': { type: 'College', coords: [[18,1], [19,1], [20,1], [18,2], [19,2], [20,2], [18,3], [19,3], [20,3]]},
-    'grocery_pharmacy_willow': { type: 'Grocery & Pharmacy', coords: [[7,8], [8,8], [9,8], [10,8], [11,8], [7,9], [8,9], [9,9]]},
-    'johnson_park': { type: 'Park', coords: [[3,10], [4,10], [5,10], [3,11], [4,11], [5,11], [3,12], [4,12], [5,12]]},
-    'main_house_area': { type: 'House', coords: [[3,13], [4,13], [5,13], [3,14], [4,14], [5,14], [3,15], [4,15], [5,15]]},
-    'college_dorm_main': { type: 'College Dorm', coords: [[3,18], [4,18], [5,18], [3,19], [4,19], [5,19]]},
+    'co_living_space': {'type': 'Co-Living Space', 'coords': [[1,1], [2,1], [3,1], [4,1], [1,2], [2,2], [3,2], [4,2], [1,3], [2,3], [3,3], [4,3]]},
+    'bar_hobbs': {'type': 'Bar', 'coords': [[7,3], [8,3], [7,4], [8,4]]},
+    'cafe_hobbs': {'type': 'Cafe', 'coords': [[3,6], [4,6], [3,7], [4,7]]},
+    'supply_store_harvey': {'type': 'Supply Store', 'coords': [[6,1], [7,1], [6,2], [7,2]]},
+    'college_oak_hill': {'type': 'College', 'coords': [[18,1], [19,1], [20,1], [18,2], [19,2], [20,2], [18,3], [19,3], [20,3]]},
+    'grocery_pharmacy_willow': {'type': 'Grocery & Pharmacy', 'coords': [[7,8], [8,8], [9,8], [10,8], [11,8], [7,9], [8,9], [9,9]]},
+    'johnson_park': {'type': 'Park', 'coords': [[3,10], [4,10], [5,10], [3,11], [4,11], [5,11], [3,12], [4,12], [5,12]]},
+    'main_house_area': {'type': 'House', 'coords': [[3,13], [4,13], [5,13], [3,14], [4,14], [5,14], [3,15], [4,15], [5,15]]},
+    'college_dorm_main': {'type': 'College Dorm', 'coords': [[3,18], [4,18], [5,18], [3,19], [4,19], [5,19]]},
 };
 const map_place_ids = Array(MAP_ROWS).fill(null).map(() => Array(MAP_COLS).fill(null));
 for (const placeId in PLACES) {
     PLACES[placeId].coords.forEach(coord => {
         const [x, y] = coord;
-        if (y >= 0 && y < MAP_ROWS && x >= 0 && x < MAP_COLS) {
-            map_place_ids[y][x] = placeId;
-        }
+        if (y >= 0 && y < MAP_ROWS && x >= 0 && x < MAP_COLS) map_place_ids[y][x] = placeId;
     });
 }
 
 let AGENTS = {};
 let selectedAgentId = null;
 let isSimulationPaused = true;
-let simulationTime = { day: 1, hour: 9, minute: 0 };
 
 const dom = {
     grid: document.getElementById('game-grid-container'),
@@ -90,6 +88,13 @@ socket.on('command_client_ready', () => {
 
 socket.on('simulation_state_update', (data) => {
     if (isSimulationPaused) return;
+    
+    const [hour, minute] = data.time;
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+    const displayMinute = String(minute).padStart(2, '0');
+    dom.time.textContent = `Day 1, ${displayHour}:${displayMinute} ${ampm}`;
+
     const serverAgents = data.agents;
     serverAgents.forEach(agentData => {
         if (!AGENTS[agentData.id]) logToUI(`${agentData.name} has entered the simulation.`);
@@ -101,24 +106,7 @@ socket.on('simulation_state_update', (data) => {
 });
 
 function gameLoop() {
-    // *** FIX: Time only updates if the engine is ready and not paused. ***
-    if (isEngineReady && !isSimulationPaused) {
-        updateSimulationTime();
-    }
     requestAnimationFrame(gameLoop);
-}
-
-function updateSimulationTime() {
-    simulationTime.minute += 1;
-    if (simulationTime.minute >= 60) {
-        simulationTime.minute = 0;
-        simulationTime.hour = (simulationTime.hour + 1) % 24;
-        if (simulationTime.hour === 0) simulationTime.day++;
-    }
-    const ampm = simulationTime.hour >= 12 ? 'PM' : 'AM';
-    const displayHour = simulationTime.hour % 12 === 0 ? 12 : simulationTime.hour % 12;
-    const displayMinute = String(simulationTime.minute).padStart(2, '0');
-    dom.time.textContent = `Day ${simulationTime.day}, ${displayHour}:${displayMinute} ${ampm}`;
 }
 
 function createAgentAvatar(agent) {
@@ -158,9 +146,8 @@ function inspectAgent(agentId, doLog = true) {
     highlightSelection(agentId);
 }
 
-// *** FIX: Re-implemented place inspection ***
 function inspectMapCell(x, y) {
-    selectedAgentId = null; // Deselect any agent
+    selectedAgentId = null;
     const placeId = map_place_ids[y]?.[x];
     if (placeId && PLACES[placeId]) {
         const place = PLACES[placeId];
@@ -175,12 +162,18 @@ function inspectMapCell(x, y) {
         dom.inspectorGoal.innerHTML = '';
         dom.inspectorNeeds.innerHTML = '';
     }
-    highlightSelection(null); // Clear highlights
+    highlightSelection(null);
 }
 
 function highlightSelection(agentId) {
-    document.querySelectorAll('.agent-avatar').forEach(div => div.classList.toggle('ring-4', div.dataset.agentId === agentId));
-    document.querySelectorAll('#agent-selection-panel button').forEach(btn => btn.classList.toggle('ring-2', btn.dataset.agentId === agentId));
+    document.querySelectorAll('.agent-avatar').forEach(div => {
+        div.classList.toggle('ring-4', div.dataset.agentId === agentId);
+        div.classList.toggle('ring-blue-500', div.dataset.agentId === agentId);
+    });
+    document.querySelectorAll('#agent-selection-panel button').forEach(btn => {
+        btn.classList.toggle('ring-2', btn.dataset.agentId === agentId);
+        btn.classList.toggle('ring-blue-500', btn.dataset.agentId === agentId);
+    });
 }
 
 function renderAgentSelectionPanel() {
@@ -213,7 +206,6 @@ function renderMap() {
             cell.className = `grid-cell ${CELL_TYPES[type].class}`;
             if (CELL_TYPES[type].icon) cell.innerHTML = CELL_TYPES[type].icon;
             cell.dataset.x = x; cell.dataset.y = y;
-            // *** FIX: Added click listener for place inspection ***
             cell.onclick = () => inspectMapCell(x, y);
             dom.grid.appendChild(cell);
         }

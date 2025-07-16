@@ -35,9 +35,9 @@ AGENT_CONFIG = [
 ]
 
 # --- World Locations ---
-# *** FIX: Each location now has a list of valid coordinates for agents to target. ***
 PLACES = {
-    'co_living_space': {'type': 'Co-Living Space', 'coords': [(1,1), (2,1), (3,1), (4,1), (1,2), (2,2), (3,2), (4,2)]},
+    # *** FIX: Added the missing coordinates for the last row. ***
+    'co_living_space': {'type': 'Co-Living Space', 'coords': [(1,1), (2,1), (3,1), (4,1), (1,2), (2,2), (3,2), (4,2), (1,3), (2,3), (3,3), (4,3)]},
     'bar_hobbs': {'type': 'Bar', 'coords': [(7,3), (8,3), (7,4), (8,4)]},
     'cafe_hobbs': {'type': 'Cafe', 'coords': [(3,6), (4,6), (3,7), (4,7)]},
     'supply_store_harvey': {'type': 'Supply Store', 'coords': [(6,1), (7,1), (6,2), (7,2)]},

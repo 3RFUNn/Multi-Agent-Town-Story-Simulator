@@ -1,7 +1,7 @@
 // --- Configuration & Global State ---
 const CELL_SIZE = 40;
 let isEngineReady = false;
-// (MAP_LAYOUT and CELL_TYPES data remains the same)
+// (MAP_LAYOUT, CELL_TYPES, PLACES, etc. data remains the same)
 const MAP_LAYOUT = [
     ['G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G'],
     ['G', 'O', 'O', 'O', 'O', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'L', 'L', 'L', 'L', 'L', 'P', 'P', 'P', 'P', 'P', 'P', 'G'],
@@ -26,7 +26,6 @@ const MAP_LAYOUT = [
     ['G', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'G'],
     ['G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G']
 ];
-// *** FIX: Moved these definitions up to be available for map_place_ids. ***
 const MAP_ROWS = MAP_LAYOUT.length;
 const MAP_COLS = MAP_LAYOUT[0].length;
 const CELL_TYPES = {
@@ -87,7 +86,7 @@ socket.on('command_client_ready', () => {
 });
 
 socket.on('simulation_state_update', (data) => {
-    if (isSimulationPaused) return;
+    if (isSimulationPaused && isEngineReady) return; // Only pause if engine is ready
     
     const [hour, minute] = data.time;
     const ampm = hour >= 12 ? 'PM' : 'AM';
@@ -106,9 +105,11 @@ socket.on('simulation_state_update', (data) => {
 });
 
 function gameLoop() {
+    // The game loop is now only for potential future animations, not state updates.
     requestAnimationFrame(gameLoop);
 }
 
+// (The rest of the functions remain the same)
 function createAgentAvatar(agent) {
     const agentDiv = document.createElement('div');
     agentDiv.id = `agent-${agent.id}`;
@@ -214,6 +215,14 @@ function renderMap() {
 
 dom.pauseBtn.addEventListener('click', () => {
     isSimulationPaused = !isSimulationPaused;
+    
+    // *** FIX: Emit the correct event to the backend ***
+    if (isSimulationPaused) {
+        socket.emit('pause_simulation', {});
+    } else {
+        socket.emit('resume_simulation', {});
+    }
+
     dom.pauseBtn.textContent = isSimulationPaused ? 'Resume' : 'Pause';
     dom.pauseBtn.classList.toggle('bg-yellow-500', !isSimulationPaused);
     dom.pauseBtn.classList.toggle('bg-green-500', isSimulationPaused);

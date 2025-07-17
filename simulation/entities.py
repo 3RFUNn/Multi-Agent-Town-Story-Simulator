@@ -18,27 +18,36 @@ class Agent:
         # --- Cognitive and Behavioral State ---
         self.personality = personality
         self.schedule = schedule
-        self.current_goal = "Idle"
-        self.current_action = "Wandering"
-        self.state = 'idle' # 'idle', 'moving', 'doing_action'
-        
-        # *** FIX: Added the missing destination attribute ***
-        self.destination = None 
-        
+        self.current_goal = "Initializing..."
+        self.current_action = "Thinking..."
+        self.current_activity = None
+        self.state = 'idle'
+        self.destination_name = None
         self.path = []
         self.path_index = 0
-        self.action_duration = 0 # How many ticks an action will last
+        self.action_duration = 0
+        self.interacting_with = None # ID of agent they are talking to
 
-        # --- Agent Needs (scale of 0-100) ---
+        self.money = random.randint(50, 200)
         self.needs = {
-            'hunger': random.randint(20, 60),
-            'social': random.randint(40, 80),
-            'energy': 100
+            'hunger': random.randint(0, 40),
+            'social': random.randint(30, 70),
+            'energy': random.randint(80, 100),
         }
 
-        # --- Relationships and Memory ---
-        self.relationships = {}
-        self.memory = []
+        # *** FIX: Each agent now has their own personal log. ***
+        self.log = []
+
+    def add_log(self, entry, world_time):
+        """Adds a new entry to the agent's personal log with a timestamp."""
+        hour, minute = world_time
+        ampm = "AM" if hour < 12 else "PM"
+        display_hour = hour % 12 if hour % 12 != 0 else 12
+        timestamp = f"{display_hour:02d}:{minute:02d} {ampm}"
+        self.log.insert(0, f"[{timestamp}] {entry}")
+        # Keep the log from getting too long
+        if len(self.log) > 50:
+            self.log.pop()
 
     def to_dict(self):
         """Converts the agent object to a dictionary for JSON serialization."""
@@ -52,11 +61,25 @@ class Agent:
             'current_goal': self.current_goal,
             'current_action': self.current_action,
             'state': self.state,
-            'needs': self.needs
+            'needs': self.needs,
+            'money': self.money,
+            'log': self.log, # Include the log in the data sent to the frontend
+            'interacting_with': self.interacting_with
         }
 
-    def update_needs(self):
+    def update_needs(self, world_time):
         """Periodically updates the agent's needs over time."""
-        self.needs['hunger'] = min(100, self.needs['hunger'] + 0.2) # Increased rate for testing
-        self.needs['social'] = min(100, self.needs['social'] + 0.1)
-        self.needs['energy'] = max(0, self.needs['energy'] - 0.05)
+        # Only update needs if not sleeping
+        if self.current_activity != "sleep_at_home":
+            self.needs['hunger'] = min(100, self.needs['hunger'] + 0.25)
+            self.needs['social'] = min(100, self.needs['social'] + 0.15)
+        
+        is_working = "work" in (self.current_activity or "")
+        
+        if self.current_activity == "sleep_at_home":
+             self.needs['energy'] = min(100, self.needs['energy'] + 0.8)
+        elif not is_working:
+            self.needs['energy'] = max(0, self.needs['energy'] - 0.1)
+        else: # Is working
+            self.needs['energy'] = max(0, self.needs['energy'] - 0.2)
+            self.money += 0.5

@@ -62,10 +62,12 @@ for (const placeId in PLACES) {
 let AGENTS = {};
 let selectedAgentId = null;
 let isSimulationPaused = true;
+let mainLog = []; // *** FIX: A separate log for global events ***
 
 const dom = {
     grid: document.getElementById('game-grid-container'),
     log: document.getElementById('log-output'),
+    logTitle: document.getElementById('main-log-title'),
     inspectorTitle: document.getElementById('inspector-title'),
     inspectorOutput: document.getElementById('inspector-output'),
     inspectorGoal: document.getElementById('inspector-goal'),
@@ -77,16 +79,16 @@ const dom = {
 
 const socket = io();
 
-socket.on('connect', () => logToUI('Successfully connected to simulation server.'));
+socket.on('connect', () => logToMain('Successfully connected to simulation server.'));
 socket.on('command_client_ready', () => {
-    logToUI('Simulation engine is ready. Starting visualization.');
+    logToMain('Simulation engine is ready. Starting visualization.');
     isEngineReady = true;
     isSimulationPaused = false;
     dom.pauseBtn.disabled = false;
 });
 
 socket.on('simulation_state_update', (data) => {
-    if (isSimulationPaused && isEngineReady) return; // Only pause if engine is ready
+    if (isSimulationPaused && isEngineReady) return;
     
     const [hour, minute] = data.time;
     const ampm = hour >= 12 ? 'PM' : 'AM';
@@ -96,20 +98,16 @@ socket.on('simulation_state_update', (data) => {
 
     const serverAgents = data.agents;
     serverAgents.forEach(agentData => {
-        if (!AGENTS[agentData.id]) logToUI(`${agentData.name} has entered the simulation.`);
+        if (!AGENTS[agentData.id]) logToMain(`${agentData.name} has entered the simulation.`);
         AGENTS[agentData.id] = agentData;
         updateAgentAvatar(agentData);
     });
     renderAgentSelectionPanel();
-    if (selectedAgentId && AGENTS[selectedAgentId]) inspectAgent(selectedAgentId, false);
+    if (selectedAgentId && AGENTS[selectedAgentId]) {
+        inspectAgent(selectedAgentId, false);
+    }
 });
 
-function gameLoop() {
-    // The game loop is now only for potential future animations, not state updates.
-    requestAnimationFrame(gameLoop);
-}
-
-// (The rest of the functions remain the same)
 function createAgentAvatar(agent) {
     const agentDiv = document.createElement('div');
     agentDiv.id = `agent-${agent.id}`;
@@ -120,6 +118,14 @@ function createAgentAvatar(agent) {
     agentDiv.dataset.agentId = agent.id;
     agentDiv.style.transition = 'top 0.5s linear, left 0.5s linear';
     agentDiv.onclick = (e) => { e.stopPropagation(); inspectAgent(agent.id, true); };
+    
+    // *** FIX: Add a speech bubble element for interactions ***
+    const speechBubble = document.createElement('div');
+    speechBubble.className = 'speech-bubble';
+    speechBubble.innerHTML = '💬';
+    speechBubble.style.display = 'none';
+    agentDiv.appendChild(speechBubble);
+
     dom.grid.appendChild(agentDiv);
 }
 
@@ -128,44 +134,95 @@ function updateAgentAvatar(agent) {
     if (!agentDiv) createAgentAvatar(agent);
     agentDiv.style.left = `${agent.x * CELL_SIZE + 5}px`;
     agentDiv.style.top = `${agent.y * CELL_SIZE + 5}px`;
+
+    // *** FIX: Show or hide the speech bubble based on interaction state ***
+    const speechBubble = agentDiv.querySelector('.speech-bubble');
+    speechBubble.style.display = agent.interacting_with ? 'block' : 'none';
 }
 
 function inspectAgent(agentId, doLog = true) {
     selectedAgentId = agentId;
     const agent = AGENTS[agentId];
     if (!agent) return;
-    if (doLog) logToUI(`Inspecting ${agent.name}.`);
+
+    if (doLog) logToMain(`Now inspecting ${agent.name}'s personal log.`);
+    
     dom.inspectorTitle.textContent = `Inspector: ${agent.name}`;
-    dom.inspectorOutput.innerHTML = `<p><span class="font-semibold">Location:</span> (${agent.x}, ${agent.y})</p><p><span class="font-semibold">Action:</span> ${agent.current_action}</p>`;
+    dom.inspectorOutput.innerHTML = `<p><span class="font-semibold">Action:</span> ${agent.current_action}</p><p><span class="font-semibold">Money:</span> $${agent.money.toFixed(2)}</p>`;
     dom.inspectorGoal.innerHTML = `<p class="font-semibold">Goal:</p><p class="text-blue-600 italic">"${agent.current_goal}"</p>`;
+    
     let needsHTML = '<p class="font-semibold mt-2">Needs:</p>';
     for (const [need, value] of Object.entries(agent.needs)) {
         const color = value > 75 ? 'bg-red-500' : value > 50 ? 'bg-yellow-500' : 'bg-green-500';
         needsHTML += `<div class="capitalize mt-1"><span>${need}</span><div class="needs-bar-container"><div class="needs-bar ${color}" style="width: ${Math.round(value)}%;"></div></div></div>`;
     }
     dom.inspectorNeeds.innerHTML = needsHTML;
+    
+    // *** FIX: Display the agent's personal log ***
+    dom.logTitle.textContent = `${agent.name}'s Log`;
+    renderLog(agent.log);
+    
     highlightSelection(agentId);
 }
 
 function inspectMapCell(x, y) {
+    if (selectedAgentId) {
+        logToMain("Switched back to main simulation log.");
+    }
     selectedAgentId = null;
     const placeId = map_place_ids[y]?.[x];
     if (placeId && PLACES[placeId]) {
         const place = PLACES[placeId];
         dom.inspectorTitle.textContent = `Inspector: Location`;
-        dom.inspectorOutput.innerHTML = `<p><span class="font-semibold">Name:</span> ${place.type}</p><p><span class="font-semibold">Coordinates:</span> (${x}, ${y})</p>`;
+        dom.inspectorOutput.innerHTML = `<p><span class="font-semibold">Name:</span> ${place.type}</p>`;
         dom.inspectorGoal.innerHTML = '';
         dom.inspectorNeeds.innerHTML = '';
-        logToUI(`Inspected map cell (${x},${y}): ${place.type}.`);
     } else {
         dom.inspectorTitle.textContent = `Inspector`;
-        dom.inspectorOutput.innerHTML = `<p class="text-gray-500">Just empty space at (${x},${y}).</p>`;
+        dom.inspectorOutput.innerHTML = `<p class="text-gray-500">Click on an agent or a map cell.</p>`;
         dom.inspectorGoal.innerHTML = '';
         dom.inspectorNeeds.innerHTML = '';
     }
+    
+    // *** FIX: Restore the main simulation log view ***
+    dom.logTitle.textContent = 'Simulation Log';
+    renderLog(mainLog);
     highlightSelection(null);
 }
 
+function logToMain(message) {
+    const entry = `<strong>[${new Date().toLocaleTimeString()}]</strong> ${message}`;
+    mainLog.unshift(entry);
+    if (mainLog.length > 100) mainLog.pop();
+    // Only render the main log if no agent is selected
+    if (!selectedAgentId) {
+        renderLog(mainLog);
+    }
+}
+
+function renderLog(logArray) {
+    dom.log.innerHTML = logArray.join('<br>');
+}
+
+function renderMap() {
+    dom.grid.innerHTML = '';
+    dom.grid.style.width = `${MAP_COLS * CELL_SIZE}px`;
+    dom.grid.style.height = `${MAP_ROWS * CELL_SIZE}px`;
+    dom.grid.style.gridTemplateColumns = `repeat(${MAP_COLS}, ${CELL_SIZE}px)`;
+    for (let y = 0; y < MAP_ROWS; y++) {
+        for (let x = 0; x < MAP_COLS; x++) {
+            const cell = document.createElement('div');
+            const type = MAP_LAYOUT[y][x];
+            cell.className = `grid-cell ${CELL_TYPES[type].class}`;
+            if (CELL_TYPES[type].icon) cell.innerHTML = CELL_TYPES[type].icon;
+            cell.dataset.x = x; cell.dataset.y = y;
+            cell.onclick = () => inspectMapCell(x, y);
+            dom.grid.appendChild(cell);
+        }
+    }
+}
+
+// (Other functions like highlightSelection, renderAgentSelectionPanel, etc. remain the same)
 function highlightSelection(agentId) {
     document.querySelectorAll('.agent-avatar').forEach(div => {
         div.classList.toggle('ring-4', div.dataset.agentId === agentId);
@@ -191,47 +248,22 @@ function renderAgentSelectionPanel() {
     });
 }
 
-function logToUI(message) {
-    dom.log.innerHTML = `<strong>[${new Date().toLocaleTimeString()}]</strong> ${message}<br>` + dom.log.innerHTML;
-}
-
-function renderMap() {
-    dom.grid.innerHTML = '';
-    dom.grid.style.width = `${MAP_COLS * CELL_SIZE}px`;
-    dom.grid.style.height = `${MAP_ROWS * CELL_SIZE}px`;
-    dom.grid.style.gridTemplateColumns = `repeat(${MAP_COLS}, ${CELL_SIZE}px)`;
-    for (let y = 0; y < MAP_ROWS; y++) {
-        for (let x = 0; x < MAP_COLS; x++) {
-            const cell = document.createElement('div');
-            const type = MAP_LAYOUT[y][x];
-            cell.className = `grid-cell ${CELL_TYPES[type].class}`;
-            if (CELL_TYPES[type].icon) cell.innerHTML = CELL_TYPES[type].icon;
-            cell.dataset.x = x; cell.dataset.y = y;
-            cell.onclick = () => inspectMapCell(x, y);
-            dom.grid.appendChild(cell);
-        }
-    }
-}
 
 dom.pauseBtn.addEventListener('click', () => {
     isSimulationPaused = !isSimulationPaused;
-    
-    // *** FIX: Emit the correct event to the backend ***
     if (isSimulationPaused) {
         socket.emit('pause_simulation', {});
     } else {
         socket.emit('resume_simulation', {});
     }
-
     dom.pauseBtn.textContent = isSimulationPaused ? 'Resume' : 'Pause';
     dom.pauseBtn.classList.toggle('bg-yellow-500', !isSimulationPaused);
     dom.pauseBtn.classList.toggle('bg-green-500', isSimulationPaused);
-    logToUI(`Simulation ${isSimulationPaused ? 'paused' : 'resumed'}.`);
+    logToMain(`Simulation ${isSimulationPaused ? 'paused' : 'resumed'}.`);
 });
 
 window.onload = function() {
     renderMap();
-    logToUI('Frontend loaded. Waiting for simulation engine...');
+    logToMain('Frontend loaded. Waiting for simulation engine...');
     dom.pauseBtn.disabled = true;
-    gameLoop();
 };

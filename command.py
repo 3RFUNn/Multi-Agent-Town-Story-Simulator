@@ -46,7 +46,8 @@ def run_simulation():
     manager = AgentManager(world_layout=MAP_LAYOUT, places_data=PLACES)
     print("Agent Manager initialized. Starting simulation loop.")
 
-    simulation_tick_interval = 1.0
+    # *** FIX: Set the simulation tick interval to 0.4 seconds for faster movement. ***
+    simulation_tick_interval = 0.4
 
     while True:
         try:

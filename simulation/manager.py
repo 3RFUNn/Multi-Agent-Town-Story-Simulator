@@ -82,9 +82,12 @@ class AgentManager:
 
     def tick(self):
         hour, minute = self.world_state['time']
-        minute += 10
-        if minute >= 60: minute = 0; hour = (hour + 1) % 24
-        self.world_state['time'] = (hour, minute)
+        # *** FIX: Decrease time increment to match faster tick rate. ***
+        minute += 2 
+        if minute >= 60:
+            minute %= 60
+            hour = (hour + 1) % 24
+        self.world_state['time'] = (hour, int(minute))
 
         self._update_agent_schedules()
         

@@ -96,6 +96,10 @@ class AgentManager:
             
             if agent.state in ['doing_action', 'interacting']:
                 agent.action_duration -= 1
+                
+                if agent.state == 'doing_action' and "work" in (agent.current_activity or ""):
+                    agent.money += 0.5 
+                
                 if agent.action_duration <= 0:
                     if agent.state == 'interacting' and agent.interacting_with:
                         other_agent = self.agents.get(agent.interacting_with)
@@ -114,6 +118,7 @@ class AgentManager:
                 occupied_positions = { (a.x, a.y) for a in self.agents.values() if a.id != agent.id }
                 
                 if not agent.path or agent.path_index >= len(agent.path):
+                    agent.path = None
                     location_name = agent.destination_name
                     target_pos = None
                     
@@ -138,18 +143,42 @@ class AgentManager:
                         if not path:
                             agent.state = 'idle'
                             agent.add_log("I can't find a path to my destination.", self.world_state['time'])
+                            if agent.interacting_with:
+                                agent.interacting_with = None
                     else:
                         agent.state = 'idle'
                         if location_name:
                              agent.add_log(f"I can't go to {location_name}, there's no space.", self.world_state['time'])
+                             if agent.interacting_with:
+                                 agent.interacting_with = None
 
                 if agent.path and agent.path_index < len(agent.path):
                     next_pos = agent.path[agent.path_index]
                     agent.x, agent.y = next_pos
                     agent.path_index += 1
                     if agent.path_index >= len(agent.path):
-                        agent.state = 'idle'
                         agent.path = []
+                        
+                        if agent.interacting_with:
+                            other_agent = self.agents.get(agent.interacting_with)
+                            if other_agent and other_agent.state == 'idle':
+                                agent.state = 'interacting'
+                                other_agent.state = 'interacting'
+                                other_agent.interacting_with = agent.id
+                                
+                                agent.current_goal = f"Chatting with {other_agent.name}"
+                                other_agent.current_goal = f"Chatting with {agent.name}"
+                                other_agent.add_log(f"{agent.name} is coming over to talk to me.", self.world_state['time'])
+                                
+                                interaction_duration = random.randint(5, 12)
+                                agent.action_duration = interaction_duration
+                                other_agent.action_duration = interaction_duration
+                            else:
+                                agent.state = 'idle'
+                                agent.add_log("They seemed busy, so I decided not to interrupt.", self.world_state['time'])
+                                agent.interacting_with = None
+                        else:
+                            agent.state = 'idle'
                         
         state_payload = {
             'agents': [agent.to_dict() for agent in self.agents.values()],

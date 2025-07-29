@@ -82,4 +82,3 @@ class Agent:
             self.needs['energy'] = max(0, self.needs['energy'] - 0.1)
         else: # Is working
             self.needs['energy'] = max(0, self.needs['energy'] - 0.2)
-            self.money += 0.5

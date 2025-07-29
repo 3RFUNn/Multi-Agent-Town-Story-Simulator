@@ -82,31 +82,36 @@ class ShouldSocialize(Node):
 # --- Action Nodes ---
 
 class FindAgentToTalkTo(Node):
-    """Finds a nearby agent and initiates an interaction."""
+    """Finds a nearby agent and initiates movement to talk to them."""
     def __init__(self, name):
         super().__init__(name)
 
     def tick(self, agent, world_state):
-        nearby_agents = [other for other in world_state['agents'].values() if other.id != agent.id and abs(other.x - agent.x) < 5 and abs(other.y - agent.y) < 5 and not other.interacting_with]
-        
-        if nearby_agents:
-            target_agent = random.choice(nearby_agents)
-            agent.interacting_with = target_agent.id
-            target_agent.interacting_with = agent.id # Both agents are now busy
-            
-            agent.state = 'interacting'
-            target_agent.state = 'interacting'
+        # Find potential targets: nearby and idle.
+        potential_targets = [
+            other for other in world_state['agents'].values()
+            if other.id != agent.id and
+               abs(other.x - agent.x) < 5 and
+               abs(other.y - agent.y) < 5 and
+               other.state == 'idle'
+        ]
 
+        if potential_targets:
+            target_agent = random.choice(potential_targets)
+            
+            # Set the intent to interact and the destination for pathfinding
+            agent.interacting_with = target_agent.id
+            agent.destination_name = f"agent_{target_agent.id}"
+            
+            # Change state to moving
+            agent.state = 'moving'
+            agent.current_goal = f"Going to talk to {target_agent.name}"
             agent.add_log(f"I see {target_agent.name} nearby, I'll go say hello.", world_state['time'])
-            target_agent.add_log(f"{agent.name} is coming over to talk to me.", world_state['time'])
-            
-            agent.current_goal = f"Chatting with {target_agent.name}"
-            target_agent.current_goal = f"Chatting with {agent.name}"
-            
-            agent.action_duration = 10 # Interaction lasts for 10 ticks
-            target_agent.action_duration = 10
+
             return NodeStatus.SUCCESS
+            
         return NodeStatus.FAILURE
+
 
 class ExecuteActivity(Node):
     def __init__(self, name, duration=5):

@@ -3,7 +3,8 @@
 import socketio
 import time
 from simulation.manager import AgentManager
-from app import MAP_LAYOUT
+# *** FIX: Import both MAP_LAYOUT and PLACES from our central loader in app.py ***
+from app import MAP_LAYOUT, PLACES
 
 # --- Configuration ---
 FLASK_SERVER_URL = 'http://127.0.0.1:5000'
@@ -11,7 +12,6 @@ FLASK_SERVER_URL = 'http://127.0.0.1:5000'
 # --- SocketIO Client Setup ---
 sio = socketio.Client()
 
-# *** FIX: Add a global flag to control the simulation loop ***
 simulation_paused = False
 
 @sio.event
@@ -27,7 +27,6 @@ def connect_error(data):
 def disconnect():
     print('Disconnected from Flask server.')
 
-# *** FIX: Add event handlers to receive pause/resume signals ***
 @sio.on('pause_simulation')
 def on_pause_simulation(data):
     global simulation_paused
@@ -40,24 +39,22 @@ def on_resume_simulation(data):
     print("--- SIMULATION RESUMED ---")
     simulation_paused = False
 
-
 # --- Main Simulation Logic ---
 def run_simulation():
     print("Initializing Agent Manager...")
-    manager = AgentManager(world_layout=MAP_LAYOUT)
+    # *** FIX: Pass the imported PLACES data into the AgentManager constructor. ***
+    manager = AgentManager(world_layout=MAP_LAYOUT, places_data=PLACES)
     print("Agent Manager initialized. Starting simulation loop.")
 
     simulation_tick_interval = 1.0
 
     while True:
         try:
-            # *** FIX: The entire tick logic is now conditional on the pause flag ***
             if not simulation_paused:
                 commands, state_payload = manager.tick()
                 if state_payload:
                     sio.emit('simulation_state_update', state_payload)
 
-            # The loop still sleeps to avoid busy-waiting
             time.sleep(simulation_tick_interval)
 
         except KeyboardInterrupt:

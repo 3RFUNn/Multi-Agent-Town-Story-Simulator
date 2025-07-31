@@ -40,10 +40,13 @@ socket.on('simulation_state_update', (data) => {
     if (isSimulationPaused && isEngineReady) return;
     
     const [hour, minute] = data.time;
+    const dayOfWeek = data.day_of_week; // Get the day of the week from the payload
     const ampm = hour >= 12 ? 'PM' : 'AM';
     const displayHour = hour % 12 === 0 ? 12 : hour % 12;
     const displayMinute = String(minute).padStart(2, '0');
-    dom.time.textContent = `Day 1, ${displayHour}:${displayMinute} ${ampm}`;
+    
+    // BUG FIX: Use the dayOfWeek variable instead of "Day 1"
+    dom.time.textContent = `${dayOfWeek}, ${displayHour}:${displayMinute} ${ampm}`;
 
     const serverAgents = data.agents;
     serverAgents.forEach(agentData => {
@@ -95,7 +98,7 @@ function inspectAgent(agentId, doLog = true) {
     if (doLog) logToMain(`Now inspecting ${agent.name}'s personal log.`);
     
     dom.inspectorTitle.textContent = `Inspector: ${agent.name}`;
-    dom.inspectorOutput.innerHTML = `<p><span class="font-semibold">Action:</span> ${agent.current_action}</p><p><span class="font-semibold">Money:</span> $${agent.money.toFixed(2)}</p>`;
+    dom.inspectorOutput.innerHTML = `<p><span class="font-semibold">Action:</span> ${agent.current_action}</p><p><span class="font-semibold">Money:</span> $${agent.money.toFixed(2)}</p><p><span class="font-semibold">Personality:</span> ${agent.personality.join(', ')}</p>`;
     dom.inspectorGoal.innerHTML = `<p class="font-semibold">Goal:</p><p class="text-blue-600 italic">"${agent.current_goal}"</p>`;
     
     let needsHTML = '<p class="font-semibold mt-2">Needs:</p>';
@@ -182,7 +185,7 @@ function highlightSelection(agentId) {
 }
 
 function renderAgentSelectionPanel() {
-    dom.roster.innerHTML = '<h2 class="text-xl font-semibold text-gray-800 w-full text-center mb-2">Agent Roster</h2>';
+    dom.roster.innerHTML = ''; // Clear roster before re-rendering
     Object.values(AGENTS).forEach(agent => {
         const btn = document.createElement('button');
         btn.dataset.agentId = agent.id;
@@ -203,9 +206,11 @@ dom.pauseBtn.addEventListener('click', () => {
     } else {
         socket.emit('resume_simulation', {});
     }
-    dom.pauseBtn.textContent = isSimulationPaused ? 'Resume' : 'Pause';
+    dom.pauseBtn.textContent = isSimulationPaused ? 'Resume Simulation' : 'Pause Simulation';
     dom.pauseBtn.classList.toggle('bg-yellow-500', !isSimulationPaused);
+    dom.pauseBtn.classList.toggle('hover:bg-yellow-600', !isSimulationPaused);
     dom.pauseBtn.classList.toggle('bg-green-500', isSimulationPaused);
+    dom.pauseBtn.classList.toggle('hover:bg-green-600', isSimulationPaused);
     logToMain(`Simulation ${isSimulationPaused ? 'paused' : 'resumed'}.`);
 });
 

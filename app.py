@@ -48,6 +48,7 @@ def handle_command_client_ready():
 
 @socketio.on('simulation_state_update')
 def handle_simulation_state_update(data):
+    # Add the day of the week to the data sent to the client
     emit('simulation_state_update', data, broadcast=True)
 
 @socketio.on('pause_simulation')

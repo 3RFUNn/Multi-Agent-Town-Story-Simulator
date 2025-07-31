@@ -1,27 +1,35 @@
 # simulation/entities.py
 
 import random
+from simulation.config import PERSONALITY_TRAITS, RELATIONSHIPS
 
 class Agent:
     """
     Represents an agent in the simulation, holding all its state and attributes.
+    This class has been refactored to support more complex states like personality,
+    relationships, and a dynamic memory stream.
     """
-    def __init__(self, agent_id, name, icon, color, home_x, home_y, personality, schedule):
+    def __init__(self, agent_id, name, icon, color, home_pos, personality, schedule_template, work_location):
         self.id = agent_id
         self.name = name
         self.icon = icon
         self.color = color
-        self.x = home_x
-        self.y = home_y
-        self.home = {'x': home_x, 'y': home_y}
+        self.x = home_pos[0]
+        self.y = home_pos[1]
+        self.home = {'x': home_pos[0], 'y': home_pos[1]}
 
         # --- Cognitive and Behavioral State ---
-        self.personality = personality
-        self.schedule = schedule
+        self.personality_names = personality # e.g., ['extrovert', 'conscientious']
+        self.personality = {k: v for p in personality for k, v in PERSONALITY_TRAITS.get(p, {}).items()}
+        self.schedule_template = schedule_template
+        self.work_location = work_location
+        self.relationships = RELATIONSHIPS.get(self.id, {})
+
+        # --- Dynamic State ---
         self.current_goal = "Initializing..."
         self.current_action = "Thinking..."
         self.current_activity = None
-        self.state = 'idle'
+        self.state = 'idle' # States: idle, moving, doing_action, interacting
         self.destination_name = None
         self.path = []
         self.path_index = 0
@@ -35,19 +43,53 @@ class Agent:
             'energy': random.randint(80, 100),
         }
 
-        # *** FIX: Each agent now has their own personal log. ***
+        # The memory stream will store Memory objects (to be implemented)
+        self.memory_stream = []
         self.log = []
 
-    def add_log(self, entry, world_time):
+    def add_log(self, entry, world_time, day_of_week):
         """Adds a new entry to the agent's personal log with a timestamp."""
         hour, minute = world_time
         ampm = "AM" if hour < 12 else "PM"
         display_hour = hour % 12 if hour % 12 != 0 else 12
-        timestamp = f"{display_hour:02d}:{minute:02d} {ampm}"
-        self.log.insert(0, f"[{timestamp}] {entry}")
+        timestamp = f"[{day_of_week} {display_hour:02d}:{minute:02d} {ampm}]"
+        log_entry = f"{timestamp} {entry}"
+        self.log.insert(0, log_entry)
         # Keep the log from getting too long
         if len(self.log) > 50:
             self.log.pop()
+
+    def update_needs(self, world_time):
+        """Periodically updates the agent's needs over time, influenced by personality."""
+        # Base decay rates
+        hunger_increase = 0.25
+        social_increase = 0.15
+        energy_decrease = 0.1
+        work_energy_decrease = 0.2
+        sleep_energy_increase = 0.8
+
+        # Only update needs if not sleeping
+        if self.current_activity != "sleep_at_home":
+            self.needs['hunger'] = min(100, self.needs['hunger'] + hunger_increase)
+            
+            # Social need decays faster for extroverts
+            social_motivation = self.personality.get('social_motivation', 1.0)
+            self.needs['social'] = min(100, self.needs['social'] + (social_increase * social_motivation))
+        
+        is_working = "work" in (self.current_activity or "")
+        
+        if self.current_activity == "sleep_at_home":
+             self.needs['energy'] = min(100, self.needs['energy'] + sleep_energy_increase)
+        elif not is_working:
+            self.needs['energy'] = max(0, self.needs['energy'] - energy_decrease)
+        else: # Is working
+             # Conscientious agents lose energy slower while working
+            work_ethic_modifier = self.personality.get('work_ethic', 1.0)
+            self.needs['energy'] = max(0, self.needs['energy'] - (work_energy_decrease / work_ethic_modifier))
+
+    def get_relationship(self, other_agent_id):
+        """Retrieves the relationship status with another agent."""
+        return self.relationships.get(other_agent_id)
 
     def to_dict(self):
         """Converts the agent object to a dictionary for JSON serialization."""
@@ -63,22 +105,7 @@ class Agent:
             'state': self.state,
             'needs': self.needs,
             'money': self.money,
-            'log': self.log, # Include the log in the data sent to the frontend
-            'interacting_with': self.interacting_with
+            'log': self.log,
+            'interacting_with': self.interacting_with,
+            'personality': self.personality_names, # Send personality names to frontend
         }
-
-    def update_needs(self, world_time):
-        """Periodically updates the agent's needs over time."""
-        # Only update needs if not sleeping
-        if self.current_activity != "sleep_at_home":
-            self.needs['hunger'] = min(100, self.needs['hunger'] + 0.25)
-            self.needs['social'] = min(100, self.needs['social'] + 0.15)
-        
-        is_working = "work" in (self.current_activity or "")
-        
-        if self.current_activity == "sleep_at_home":
-             self.needs['energy'] = min(100, self.needs['energy'] + 0.8)
-        elif not is_working:
-            self.needs['energy'] = max(0, self.needs['energy'] - 0.1)
-        else: # Is working
-            self.needs['energy'] = max(0, self.needs['energy'] - 0.2)

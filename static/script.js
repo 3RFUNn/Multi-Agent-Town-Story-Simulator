@@ -103,10 +103,8 @@ function inspectAgent(agentId, doLog = true) {
     
     let needsHTML = '<p class="font-semibold mt-2">Needs:</p>';
     for (const [need, value] of Object.entries(agent.needs)) {
-        // FIXED: Reverse the bar - empty when need is high (bad), full when need is low (satisfied)
-        const color = value < 25 ? 'bg-green-500' : value < 50 ? 'bg-yellow-500' : 'bg-red-500';
-        const percentage = Math.round(100 - value); // Invert the percentage
-        needsHTML += `<div class="capitalize mt-1"><span>${need}</span><div class="needs-bar-container"><div class="needs-bar ${color}" style="width: ${percentage}%;"></div></div></div>`;
+        const color = value > 75 ? 'bg-red-500' : value > 50 ? 'bg-yellow-500' : 'bg-green-500';
+        needsHTML += `<div class="capitalize mt-1"><span>${need}</span><div class="needs-bar-container"><div class="needs-bar ${color}" style="width: ${Math.round(value)}%;"></div></div></div>`;
     }
     dom.inspectorNeeds.innerHTML = needsHTML;
     

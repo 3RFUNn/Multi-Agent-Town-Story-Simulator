@@ -272,13 +272,6 @@ class ExecuteActivity(Node):
                 "goal": "Mastering my coursework",
                 "log": "Need to focus on my studies and get caught up."
             },
-            
-            # Sleep activities
-            "sleep_at_home": {
-                "action": "Sleeping peacefully and recharging",
-                "goal": "Getting the rest I need to feel energized",
-                "log": "Time to get some much-needed sleep and recharge."
-            },
         }
         
         # Default description for activities not specifically defined
@@ -291,67 +284,27 @@ class ExecuteActivity(Node):
         return descriptions.get(activity, default)
 
     def _update_needs_for_activity(self, agent, activity):
-        """Update agent needs based on the specific activity - called when activity starts"""
-        # Get personality traits for enhanced effects
-        is_extrovert = 'extrovert' in agent.personality_names
-        is_introvert = 'introvert' in agent.personality_names
-        is_social_butterfly = 'social_butterfly' in agent.personality_names
-        is_fitness_enthusiast = 'fitness_enthusiast' in agent.personality_names
-        is_lazy = 'lazy' in agent.personality_names
-        is_workaholic = 'workaholic' in agent.personality_names
-        
+        """Update agent needs based on the specific activity"""
         if "eat" in activity or "lunch" in activity or "dinner" in activity or "breakfast" in activity:
-            if is_fitness_enthusiast:
-                agent.needs['hunger'] = max(0, agent.needs['hunger'] - 95)  # Fitness enthusiasts enjoy healthy meals more
-            else:
-                agent.needs['hunger'] = max(0, agent.needs['hunger'] - 90)  # Major hunger relief
-                
+            agent.needs['hunger'] = max(0, agent.needs['hunger'] - 50)
         elif "coffee" in activity:
-            if is_workaholic:
-                agent.needs['hunger'] = max(0, agent.needs['hunger'] - 40)  # Workaholics love coffee
-                agent.needs['energy'] = min(100, agent.needs['energy'] + 35)  # Extra energy boost
-            else:
-                agent.needs['hunger'] = max(0, agent.needs['hunger'] - 30)  # Moderate hunger relief
-                agent.needs['energy'] = min(100, agent.needs['energy'] + 25)  # Energy boost from caffeine
+            agent.needs['hunger'] = max(0, agent.needs['hunger'] - 15)
+            agent.needs['energy'] = min(100, agent.needs['energy'] + 10)
         
-        if "socialize" in activity or "drinks" in activity or "party" in activity or "nightlife" in activity:
-            if is_extrovert or is_social_butterfly:
-                agent.needs['social'] = max(0, agent.needs['social'] - 98)  # MASSIVE social satisfaction for extroverts
-                agent.needs['energy'] = min(100, agent.needs['energy'] + 15)  # Extroverts gain energy from socializing
-            elif is_introvert:
-                agent.needs['social'] = max(0, agent.needs['social'] - 70)  # Less social satisfaction but still some
-            else:
-                agent.needs['social'] = max(0, agent.needs['social'] - 85)  # Normal social satisfaction
+        if "socialize" in activity or "drinks" in activity or "party" in activity:
+            agent.needs['social'] = max(0, agent.needs['social'] - 60)
         
         if "workout" in activity or "gym" in activity or "training" in activity:
-            if is_fitness_enthusiast:
-                agent.needs['energy'] = max(0, agent.needs['energy'] - 25)  # Less energy drain for fitness enthusiasts
-                agent.needs['social'] = max(0, agent.needs['social'] - 40)  # MAJOR social boost from gym community
-            elif is_lazy:
-                agent.needs['energy'] = max(0, agent.needs['energy'] - 60)  # Lazy people hate exercise
-            else:
-                agent.needs['energy'] = max(0, agent.needs['energy'] - 40)  # Major energy drain from exercise
+            agent.needs['energy'] = max(0, agent.needs['energy'] - 20)
+            # Fitness enthusiasts get a mood boost from exercise
+            if 'fitness_enthusiast' in agent.personality_names:
+                agent.needs['social'] = max(0, agent.needs['social'] - 10)
         
         if "relax" in activity or "leisure" in activity or "park" in activity:
-            if is_lazy:
-                agent.needs['energy'] = min(100, agent.needs['energy'] + 35)  # Lazy people LOVE relaxing
-            elif is_fitness_enthusiast:
-                agent.needs['energy'] = min(100, agent.needs['energy'] + 25)  # Good recovery for athletes
-            else:
-                agent.needs['energy'] = min(100, agent.needs['energy'] + 20)  # Good energy restoration
-        
-        if "work" in activity or "shift" in activity:
-            if is_workaholic:
-                agent.needs['energy'] = min(100, agent.needs['energy'] + 10)  # Workaholics gain energy from work!
-            # No negative effects here since they're handled in continuous updates
+            agent.needs['energy'] = min(100, agent.needs['energy'] + 8)
         
         if "sleep" in activity:
-            if is_lazy:
-                agent.needs['energy'] = min(100, agent.needs['energy'] + 40)  # Lazy people LOVE sleep
-            elif is_fitness_enthusiast:
-                agent.needs['energy'] = min(100, agent.needs['energy'] + 35)  # Better recovery
-            else:
-                agent.needs['energy'] = min(100, agent.needs['energy'] + 30)  # Good initial restoration
+            agent.needs['energy'] = min(100, agent.needs['energy'] + 80)
 
     def simulate(self, agent, world_state, prev_summary):
         final_needs = prev_summary.final_needs.copy()
@@ -363,11 +316,11 @@ class ExecuteActivity(Node):
 
         # Simulate need changes
         if "eat" in activity or "lunch" in activity or "dinner" in activity:
-            final_needs['hunger'] = max(0, final_needs['hunger'] - 90)
+            final_needs['hunger'] = max(0, final_needs['hunger'] - 50)
         if "socialize" in activity or "drinks" in activity:
-            final_needs['social'] = max(0, final_needs['social'] - 95)
+            final_needs['social'] = max(0, final_needs['social'] - 60)
         if "workout" in activity or "gym" in activity:
-            final_needs['energy'] = max(0, final_needs['energy'] - 40)
+            final_needs['energy'] = max(0, final_needs['energy'] - 20)
         if "sleep" in activity:
             final_needs['energy'] = min(100, final_needs['energy'] + 80)
 

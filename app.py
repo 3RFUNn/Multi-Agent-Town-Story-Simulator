@@ -33,6 +33,11 @@ def static_files(filename):
     # This will now also serve our new map_data.json file
     return send_from_directory(STATIC_FOLDER, filename)
 
+# Add this function to emit daily stories
+def emit_daily_story(story_data):
+    # story_data: {'day': day_name, 'text': story}
+    emit('new_daily_story', story_data, broadcast=True)
+
 # --- SocketIO Event Handlers ---
 @socketio.on('connect')
 def handle_connect():

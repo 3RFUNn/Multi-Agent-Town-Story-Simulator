@@ -41,6 +41,17 @@ def on_resume_simulation(data):
 
 # --- Main Simulation Logic ---
 def run_simulation():
+    from simulation.llm_handler import LLMHandler
+    print("Checking LLM API connectivity...")
+    llm = LLMHandler()
+    ok, msg = llm.check_llm_api()
+    if ok:
+        print(f"LLM API is working: {msg}")
+    else:
+        print(f"LLM API check failed: {msg}")
+        print("Simulation will not start. Please check your API key and network.")
+        return
+
     print("Initializing Agent Manager...")
     # *** FIX: Pass the imported PLACES data into the AgentManager constructor. ***
     manager = AgentManager(world_layout=MAP_LAYOUT, places_data=PLACES)

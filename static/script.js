@@ -12,6 +12,7 @@ let AGENTS = {};
 let selectedAgentId = null;
 let isSimulationPaused = true;
 let mainLog = [];
+let DAILY_STORIES = [];
 
 const dom = {
     grid: document.getElementById('game-grid-container'),
@@ -58,6 +59,10 @@ socket.on('simulation_state_update', (data) => {
     if (selectedAgentId && AGENTS[selectedAgentId]) {
         inspectAgent(selectedAgentId, false);
     }
+});
+
+socket.on('new_daily_story', (storyData) => {
+    addDailyStory(storyData.day, storyData.text);
 });
 
 function createAgentAvatar(agent) {
@@ -198,6 +203,21 @@ function renderAgentSelectionPanel() {
     });
 }
 
+function renderDailyStoryPanel() {
+    const storyList = document.getElementById('daily-story-list');
+    storyList.innerHTML = '';
+    DAILY_STORIES.forEach(story => {
+        const li = document.createElement('li');
+        li.className = 'bg-gray-100 p-3 rounded shadow';
+        li.innerHTML = `<strong>${story.day}</strong>:<br><span>${story.text}</span>`;
+        storyList.appendChild(li);
+    });
+}
+
+function addDailyStory(day, text) {
+    DAILY_STORIES.push({ day, text });
+    renderDailyStoryPanel();
+}
 
 dom.pauseBtn.addEventListener('click', () => {
     isSimulationPaused = !isSimulationPaused;

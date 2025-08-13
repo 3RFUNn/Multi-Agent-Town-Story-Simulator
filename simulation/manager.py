@@ -4,6 +4,9 @@ import random
 from .entities import Agent
 from .config import AGENT_CONFIG, ACTIVITY_DATA, SCHEDULE_TEMPLATES
 from behavior.agent_behaviors import create_agent_bt
+from simulation.narrative.narrative_system import NarrativeSystem
+from simulation.llm_handler import LLMHandler
+from app import emit_daily_story
 
 def find_path_bfs(start_x, start_y, target_x, target_y, world_layout, occupied_positions):
     """Finds the shortest path from start to target using Breadth-First Search (BFS)."""
@@ -46,6 +49,9 @@ class AgentManager:
             'places': places_data,
             'activity_data': ACTIVITY_DATA 
         }
+        self.llm_handler = LLMHandler()
+        self.narrative_system = NarrativeSystem(self.llm_handler)
+        self.daily_stories = []
         self._initialize_agents()
 
     def _initialize_agents(self):
@@ -145,6 +151,7 @@ class AgentManager:
         day_index = self.world_state['day_index']
         
         minute += 2 # BUG FIX: Slow down time progression
+        day_rolled_over = False
         if minute >= 60:
             minute %= 60
             hour += 1
@@ -156,6 +163,9 @@ class AgentManager:
                 for agent in agent_list: # Reset BTs at the start of a new day
                     agent.behavior_tree.reset()
                 print(f"A new day has dawned! It is now {self.days[day_index]}.")
+                day_rolled_over = True
+                self._pending_narrative_day = self.days[day_index]
+                self._pending_narrative = True
 
         self.world_state['time'] = (hour, int(minute))
         self.world_state['day_index'] = day_index
@@ -322,4 +332,16 @@ class AgentManager:
             'time': self.world_state['time'],
             'day_of_week': self.world_state['day_of_week']
         }
+
+        # Write daily logs and story at 2 AM
+        if hour == 2 and minute == 0:
+            day_name = self.days[day_index]
+            agent_ids = [agent.id for agent in self.agents.values()]
+            for agent in self.agents.values():
+                self.narrative_system.write_agent_diary(agent, day_name)
+            story = self.narrative_system.compile_daily_story(agent_ids, day_name)
+            self.daily_stories.append({'day': day_name, 'text': story})
+            self.narrative_system.reset_agent_diaries(agent_ids, day_name)
+            emit_daily_story({'day': day_name, 'text': story})
+
         return [], state_payload

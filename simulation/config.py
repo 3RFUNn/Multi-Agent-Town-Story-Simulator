@@ -82,6 +82,7 @@ SCHEDULE_TEMPLATES = {
             (17, 18): "evening_workout_at_gym",
             (18, 20): "dinner_at_cafe",
             (20, 22): "socialize_at_park",
+            (22, 23): "nightlife_at_bar",
         },
         'weekends': {
             (9, 11): "lazy_morning_at_home",

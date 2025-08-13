@@ -4,11 +4,12 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
+    min-height: 140vh; /* Increase main page height for more content */
     margin: 0;
     padding: 20px;
     box-sizing: border-box;
     overflow: hidden; /* Prevent body scrolling */
+    overflow-y: auto; /* Enable vertical scrolling for the whole page */
 }
 
 #app-container {
@@ -20,7 +21,7 @@ body {
     overflow: hidden; /* Ensures rounded corners */
     max-width: 1400px; /* Max width for the whole app */
     width: 95%; /* Responsive width */
-    height: 90vh; /* Responsive height */
+    height: 130vh; /* Increase app container height */
 }
 
 #game-area {
@@ -183,4 +184,48 @@ body {
     height: 100%;
     border-radius: 4px;
     transition: width 0.3s ease-in-out;
+}
+
+#daily-story-panel {
+    max-height: 700px;
+    min-height: 400px;
+    width: 95%;
+    margin-left: auto;
+    margin-right: auto;
+    font-size: 1.15em;
+    overflow-y: auto;
+    background: linear-gradient(135deg, #f8fafc 60%, #e0e7ef 100%);
+    border: 2px solid #a5b4fc;
+    box-shadow: 0 4px 24px rgba(80, 80, 160, 0.08);
+    padding: 2rem 2rem 1rem 2rem;
+}
+
+#daily-story-list {
+    max-width: 100%;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+#daily-story-list li {
+    background: #f3f4f6;
+    border-left: 6px solid #6366f1;
+    margin-bottom: 1.5rem;
+    padding: 1.2rem 1rem 1rem 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(80,80,160,0.04);
+    font-size: 1.08em;
+    color: #374151;
+    transition: box-shadow 0.2s;
+}
+#daily-story-list li strong {
+    color: #6366f1;
+    font-size: 1.15em;
+    letter-spacing: 0.5px;
+}
+#daily-story-list li span {
+    display: block;
+    margin-top: 0.7em;
+    line-height: 1.6;
+    white-space: pre-line;
 }

@@ -9,7 +9,7 @@ class Agent:
     This class has been refactored to support more complex states like personality,
     relationships, and a dynamic memory stream.
     """
-    def __init__(self, agent_id, name, icon, color, home_pos, personality, schedule_template, work_location):
+    def __init__(self, agent_id, name, icon, color, home_pos, personality, schedule_template, work_location, background=None):
         self.id = agent_id
         self.name = name
         self.icon = icon
@@ -43,8 +43,10 @@ class Agent:
             'energy': 0,
         }
 
-        # The memory stream will store Memory objects (to be implemented)
-        self.memory_stream = []
+        self.background = background or f"{name} grew up in this town and has a unique story."
+        from simulation.memory.memory import AgentMemoryStream
+        self.memory_stream = AgentMemoryStream()
+
         self.log = []
 
     def add_log(self, entry, world_time, day_of_week):
@@ -58,6 +60,10 @@ class Agent:
         # Keep the log from getting too long
         if len(self.log) > 50:
             self.log.pop()
+        # Add to memory stream as well
+        from simulation.memory.memory import Memory
+        mem = Memory(event=entry, timestamp=f"{day_of_week}", details={'time': world_time})
+        self.memory_stream.add_memory(mem)
 
     def update_needs(self, world_time):
         """Periodically updates the agent's needs over time, influenced by personality."""

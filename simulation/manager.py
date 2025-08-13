@@ -97,8 +97,8 @@ class AgentManager:
             # Lazy agents sleep more (10 PM to 10 AM)
             return hour >= 22 or hour < 10
         elif 'workaholic' in agent.personality_names:
-            # Workaholics sleep less (1 AM to 6 AM)
-            return hour >= 1 and hour < 6
+            # Workaholics sleep less (12 AM to 6 AM)
+            return hour >= 0 and hour < 6
         elif 'fitness_enthusiast' in agent.personality_names:
             # Fitness enthusiasts have early bedtime (10 PM to 6 AM)
             return hour >= 22 or hour < 6
@@ -196,13 +196,26 @@ class AgentManager:
                             other_agent.interacting_with = None
                             other_agent.behavior_tree.reset()
                         agent.add_log(f"Finished my conversation.", self.world_state['time'], self.world_state['day_of_week'])
+                    elif agent.state == 'doing_action':
+                        # Log completion of the activity
+                        if "sleep" in (agent.current_activity or ""):
+                            agent.add_log(f"I've had a good rest and feel refreshed.", self.world_state['time'], self.world_state['day_of_week'])
+                        else:
+                            agent.add_log(f"I've finished {agent.current_activity.replace('_', ' ') if agent.current_activity else 'my activity'}.", self.world_state['time'], self.world_state['day_of_week'])
+                    
                     agent.state = 'idle'
                     agent.interacting_with = None
                     agent.behavior_tree.reset()
                 continue
 
             if agent.state == 'idle':
-                agent.behavior_tree.tick(agent, self.world_state)
+                # Don't process behavior tree if already sleeping and it's sleep time
+                if agent.current_activity == "sleep_at_home" and self._is_sleep_time(agent, hour):
+                    # Keep sleeping - just update action text to ensure it's correct
+                    agent.current_action = "Sleeping peacefully and recharging"
+                    agent.current_goal = "Getting the rest I need to feel energized"
+                else:
+                    agent.behavior_tree.tick(agent, self.world_state)
 
             if agent.state == 'moving':
                 occupied_positions = { (a.x, a.y) for a in self.agents.values() if a.id != agent.id }
@@ -265,6 +278,10 @@ class AgentManager:
                         else:
                             agent.state = 'idle'
                         agent.behavior_tree.reset() # Reset BT upon arrival
+                        
+                        # FIX: If this was a sleep activity, immediately start the activity
+                        if agent.current_activity and "sleep" in agent.current_activity:
+                            agent.behavior_tree.tick(agent, self.world_state)
                         
         state_payload = {
             'agents': [agent.to_dict() for agent in self.agents.values()],

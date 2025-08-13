@@ -295,7 +295,7 @@ class ExecuteActivity(Node):
             agent.needs['social'] = max(0, agent.needs['social'] - 60)
         
         if "workout" in activity or "gym" in activity or "training" in activity:
-            agent.needs['energy'] = min(100, agent.needs['energy'] + 40) # Workout increases tiredness significantly
+            agent.needs['energy'] = min(100, agent.needs['energy'] + 5) # Workout increases tiredness significantly
             # Fitness enthusiasts get a mood boost from exercise
             if 'fitness_enthusiast' in agent.personality_names:
                 agent.needs['social'] = max(0, agent.needs['social'] - 10)
@@ -320,7 +320,7 @@ class ExecuteActivity(Node):
         if "socialize" in activity or "drinks" in activity:
             final_needs['social'] = max(0, final_needs['social'] - 60)
         if "workout" in activity or "gym" in activity:
-            final_needs['energy'] = min(100, final_needs['energy'] + 40)
+            final_needs['energy'] = min(100, final_needs['energy'] + 5)
         if "relax" in activity or "park" in activity:
             final_needs['energy'] = max(0, final_needs['energy'] - 25)
         if "sleep" in activity:

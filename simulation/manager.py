@@ -166,6 +166,11 @@ class AgentManager:
         agents_to_process = list(self.agents.values())
         random.shuffle(agents_to_process)
 
+        # Keep track of all spots that are occupied or are the destination of an agent.
+        # This prevents agents from selecting the same destination cell in the same tick.
+        claimed_spots = set((a.x, a.y) for a in self.agents.values())
+        claimed_spots.update(a.path[-1] for a in self.agents.values() if a.path and len(a.path) > 0)
+
         for agent in agents_to_process:
             agent.update_needs(self.world_state['time'])
             
@@ -205,7 +210,8 @@ class AgentManager:
                 agent.behavior_tree.tick(agent, self.world_state)
 
             if agent.state == 'moving':
-                occupied_positions = { (a.x, a.y) for a in self.agents.values() if a.id != agent.id }
+                # For pathfinding traversal, we only care about the current positions of other agents.
+                occupied_for_pathing = { (a.x, a.y) for a in self.agents.values() if a.id != agent.id }
                 
                 if not agent.path or agent.path_index >= len(agent.path):
                     agent.path = None
@@ -216,25 +222,31 @@ class AgentManager:
                         target_agent_id = location_name.split("_")[1]
                         target_agent = self.agents.get(target_agent_id)
                         if target_agent:
-                            target_pos = self._find_adjacent_spot(target_agent.x, target_agent.y, occupied_positions)
+                            # Find an adjacent spot that isn't currently claimed
+                            target_pos = self._find_adjacent_spot(target_agent.x, target_agent.y, claimed_spots)
                     elif location_name and "home" in location_name:
-                        # Get the appropriate home location based on agent's home position
-                        target_pos = self._get_agent_home_target(agent, occupied_positions)
+                        # Find a home spot that isn't currently claimed
+                        target_pos = self._get_agent_home_target(agent, claimed_spots)
                     elif location_name:
                         target_location = self.world_state['places'].get(location_name)
                         if target_location and target_location.get('coords'):
-                            available_spots = [p for p in target_location['coords'] if p not in occupied_positions]
+                            # Find a spot in the location that isn't currently claimed
+                            available_spots = [p for p in target_location['coords'] if p not in claimed_spots]
                             if available_spots:
                                 target_pos = random.choice(available_spots)
                     
                     if target_pos:
-                        path = find_path_bfs(agent.x, agent.y, target_pos[0], target_pos[1], self.world_layout, occupied_positions)
+                        # Claim this spot for the rest of the tick so no other agent takes it.
+                        claimed_spots.add(target_pos)
+                        path = find_path_bfs(agent.x, agent.y, target_pos[0], target_pos[1], self.world_layout, occupied_for_pathing)
                         agent.path = path
                         agent.path_index = 0
                         if not path:
                             agent.add_log(f"I can't find a path to {location_name}.", self.world_state['time'], self.world_state['day_of_week'])
                             agent.state = 'idle'
                             agent.behavior_tree.reset()
+                            # Release the claim if pathfinding fails
+                            claimed_spots.remove(target_pos)
                     else:
                         agent.state = 'idle'
                         if location_name:
@@ -242,8 +254,47 @@ class AgentManager:
 
                 if agent.path and agent.path_index < len(agent.path):
                     next_pos = agent.path[agent.path_index]
-                    agent.x, agent.y = next_pos
-                    agent.path_index += 1
+                    
+                    current_occupants = { (a.x, a.y) for a in self.agents.values() if a.id != agent.id }
+                    if next_pos in current_occupants:
+                        agent.add_log(f"My path to {agent.destination_name} is blocked, finding a new spot.", self.world_state['time'], self.world_state['day_of_week'])
+                        
+                        # --- REPLANNING LOGIC ---
+                        location_name = agent.destination_name
+                        target_pos = None
+                        
+                        # Find a new spot in the same destination location
+                        if location_name and "home" in location_name:
+                            target_pos = self._get_agent_home_target(agent, claimed_spots)
+                        elif location_name:
+                            target_location = self.world_state['places'].get(location_name)
+                            if target_location and target_location.get('coords'):
+                                available_spots = [p for p in target_location['coords'] if p not in claimed_spots]
+                                if available_spots:
+                                    target_pos = random.choice(available_spots)
+
+                        if target_pos:
+                            claimed_spots.add(target_pos)
+                            occupied_for_pathing = { (a.x, a.y) for a in self.agents.values() if a.id != agent.id }
+                            path = find_path_bfs(agent.x, agent.y, target_pos[0], target_pos[1], self.world_layout, occupied_for_pathing)
+                            
+                            if path:
+                                agent.path = path
+                                agent.path_index = 0
+                                # Move immediately to the first step of the new path if possible
+                                if agent.path and agent.path_index < len(agent.path):
+                                    new_next_pos = agent.path[agent.path_index]
+                                    if new_next_pos not in current_occupants:
+                                        agent.x, agent.y = new_next_pos
+                                        agent.path_index += 1
+                            else:
+                                # If no path to new spot, release claim and wait
+                                claimed_spots.remove(target_pos)
+                        # --- END REPLANNING ---
+                    else:
+                        agent.x, agent.y = next_pos
+                        agent.path_index += 1
+
                     if agent.path_index >= len(agent.path):
                         agent.path = []
                         

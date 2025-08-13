@@ -38,9 +38,9 @@ class Agent:
 
         self.money = random.randint(50, 200)
         self.needs = {
-            'hunger': random.randint(0, 40),
-            'social': random.randint(30, 70),
-            'energy': random.randint(80, 100),
+            'hunger': 0,
+            'social': 0,
+            'energy': 0,
         }
 
         # The memory stream will store Memory objects (to be implemented)
@@ -61,31 +61,31 @@ class Agent:
 
     def update_needs(self, world_time):
         """Periodically updates the agent's needs over time, influenced by personality."""
-        # Base decay rates
+        # Base increase rates (higher value = more urgent need)
         hunger_increase = 0.25
         social_increase = 0.15
-        energy_decrease = 0.1
-        work_energy_decrease = 0.2
-        sleep_energy_increase = 0.8
+        energy_increase = 0.1 # Tiredness increases over time
+        work_energy_increase = 0.2 # Tiredness increases faster when working
+        sleep_energy_decrease = 0.8 # Tiredness decreases when sleeping
 
         # Only update needs if not sleeping
         if self.current_activity != "sleep_at_home":
             self.needs['hunger'] = min(100, self.needs['hunger'] + hunger_increase)
             
-            # Social need decays faster for extroverts
+            # Social need increases faster for extroverts
             social_motivation = self.personality.get('social_motivation', 1.0)
             self.needs['social'] = min(100, self.needs['social'] + (social_increase * social_motivation))
         
         is_working = "work" in (self.current_activity or "")
         
         if self.current_activity == "sleep_at_home":
-             self.needs['energy'] = min(100, self.needs['energy'] + sleep_energy_increase)
+             self.needs['energy'] = max(0, self.needs['energy'] - sleep_energy_decrease)
         elif not is_working:
-            self.needs['energy'] = max(0, self.needs['energy'] - energy_decrease)
+            self.needs['energy'] = min(100, self.needs['energy'] + energy_increase)
         else: # Is working
-             # Conscientious agents lose energy slower while working
+             # Conscientious agents get tired slower while working
             work_ethic_modifier = self.personality.get('work_ethic', 1.0)
-            self.needs['energy'] = max(0, self.needs['energy'] - (work_energy_decrease / work_ethic_modifier))
+            self.needs['energy'] = min(100, self.needs['energy'] + (work_energy_increase / work_ethic_modifier))
 
     def get_relationship(self, other_agent_id):
         """Retrieves the relationship status with another agent."""

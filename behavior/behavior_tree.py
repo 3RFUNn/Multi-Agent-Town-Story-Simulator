@@ -14,10 +14,12 @@ class SimulationSummary:
 # We define this here to be used by the StatefulSelector.
 def heuristic_function(agent, initial_summary, final_summary):
     score = 0
-    # Higher score for fulfilling needs
+    # Higher score for fulfilling needs. For all needs, a lower value is better.
     for need, initial_value in initial_summary.final_needs.items():
         final_value = final_summary.final_needs.get(need, initial_value)
-        change = initial_value - final_value  # Positive change is good (need decreased)
+        
+        # For all needs, a lower final value is better (need is reduced).
+        change = initial_value - final_value
         
         # Weight needs differently, e.g., hunger and energy are more critical
         weight = 1.5 if need in ['hunger', 'energy'] else 1.0

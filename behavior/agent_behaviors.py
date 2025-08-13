@@ -22,13 +22,13 @@ class IsNeedCritical(Node):
 
 class IsAgentTired(Node):
     """Specific and common check for the agent's energy level."""
-    def __init__(self, name, threshold=15):
+    def __init__(self, name, threshold=75):
         super().__init__(name)
         self.threshold = threshold
 
     def tick(self, agent, world_state):
-        if agent.needs['energy'] <= self.threshold:
-            agent.add_log(f"I'm completely exhausted (Energy: {agent.needs['energy']:.1f}). I need to go home immediately and rest.", world_state['time'], world_state['day_of_week'])
+        if agent.needs['energy'] >= self.threshold:
+            agent.add_log(f"I'm feeling quite tired (Energy Need: {agent.needs['energy']:.1f}). I should find a place to rest.", world_state['time'], world_state['day_of_week'])
             return NodeStatus.SUCCESS
         return NodeStatus.FAILURE
 
@@ -289,22 +289,22 @@ class ExecuteActivity(Node):
             agent.needs['hunger'] = max(0, agent.needs['hunger'] - 50)
         elif "coffee" in activity:
             agent.needs['hunger'] = max(0, agent.needs['hunger'] - 15)
-            agent.needs['energy'] = min(100, agent.needs['energy'] + 10)
+            agent.needs['energy'] = max(0, agent.needs['energy'] - 15) # Coffee reduces tiredness
         
         if "socialize" in activity or "drinks" in activity or "party" in activity:
             agent.needs['social'] = max(0, agent.needs['social'] - 60)
         
         if "workout" in activity or "gym" in activity or "training" in activity:
-            agent.needs['energy'] = max(0, agent.needs['energy'] - 20)
+            agent.needs['energy'] = min(100, agent.needs['energy'] + 40) # Workout increases tiredness significantly
             # Fitness enthusiasts get a mood boost from exercise
             if 'fitness_enthusiast' in agent.personality_names:
                 agent.needs['social'] = max(0, agent.needs['social'] - 10)
         
         if "relax" in activity or "leisure" in activity or "park" in activity:
-            agent.needs['energy'] = min(100, agent.needs['energy'] + 8)
+            agent.needs['energy'] = max(0, agent.needs['energy'] - 25) # Relaxing reduces tiredness
         
         if "sleep" in activity:
-            agent.needs['energy'] = min(100, agent.needs['energy'] + 80)
+            agent.needs['energy'] = max(0, agent.needs['energy'] - 90) # Sleeping greatly reduces tiredness
 
     def simulate(self, agent, world_state, prev_summary):
         final_needs = prev_summary.final_needs.copy()
@@ -320,9 +320,11 @@ class ExecuteActivity(Node):
         if "socialize" in activity or "drinks" in activity:
             final_needs['social'] = max(0, final_needs['social'] - 60)
         if "workout" in activity or "gym" in activity:
-            final_needs['energy'] = max(0, final_needs['energy'] - 20)
+            final_needs['energy'] = min(100, final_needs['energy'] + 40)
+        if "relax" in activity or "park" in activity:
+            final_needs['energy'] = max(0, final_needs['energy'] - 25)
         if "sleep" in activity:
-            final_needs['energy'] = min(100, final_needs['energy'] + 80)
+            final_needs['energy'] = max(0, final_needs['energy'] - 90)
 
         return SimulationSummary(final_needs, final_money)
 
@@ -361,9 +363,8 @@ class PlanPathToActivityLocation(Node):
         return NodeStatus.SUCCESS
 
     def simulate(self, agent, world_state, prev_summary):
-        # Pathfinding consumes a bit of energy
         final_needs = prev_summary.final_needs.copy()
-        final_needs['energy'] = max(0, final_needs['energy'] - 2)
+        final_needs['energy'] = min(100, final_needs['energy'] + 2) # Pathfinding increases tiredness
         return SimulationSummary(final_needs, prev_summary.final_money)
 
 class PlanPathToHome(Node):
@@ -373,13 +374,67 @@ class PlanPathToHome(Node):
     def tick(self, agent, world_state):
         agent.destination_name = f"{agent.id}_home"
         agent.state = 'moving'
-        agent.current_goal = "Going home because I'm exhausted"
+        agent.current_goal = "Going home to get some sleep"
         agent.add_log("I'm completely drained. I need to get home immediately and get some rest.", world_state['time'], world_state['day_of_week'])
         return NodeStatus.SUCCESS
 
     def simulate(self, agent, world_state, prev_summary):
         final_needs = prev_summary.final_needs.copy()
-        final_needs['energy'] = max(0, final_needs['energy'] - 2)
+        final_needs['energy'] = min(100, final_needs['energy'] + 2) # Pathfinding increases tiredness
+        return SimulationSummary(final_needs, prev_summary.final_money)
+
+class PlanPathToRestLocation(Node):
+    """Plans a path to a location to rest, like a park or cafe."""
+    def __init__(self, name):
+        super().__init__(name)
+        self.rest_locations = ['central_park', 'downtown_cafe']
+
+    def tick(self, agent, world_state):
+        # Find a nearby rest location
+        chosen_location = random.choice(self.rest_locations)
+        agent.destination_name = chosen_location
+        agent.state = 'moving'
+        agent.current_goal = f"Going to the {chosen_location.replace('_', ' ')} to rest for a bit"
+        
+        # Set a temporary activity that will be executed upon arrival
+        agent.current_activity = "take_a_short_rest"
+        world_state['activity_data']['take_a_short_rest'] = {
+            "location": chosen_location,
+            "cost": 0
+        }
+
+        agent.add_log(f"I'm feeling tired, so I'll head to the {chosen_location.replace('_', ' ')} to recharge.", world_state['time'], world_state['day_of_week'])
+        return NodeStatus.SUCCESS
+
+    def simulate(self, agent, world_state, prev_summary):
+        final_needs = prev_summary.final_needs.copy()
+        final_needs['energy'] = min(100, final_needs['energy'] + 2) # Pathfinding cost
+        return SimulationSummary(final_needs, prev_summary.final_money)
+
+class ExecuteRest(Node):
+    """A specific action for the agent to rest and recover energy."""
+    def __init__(self, name, duration=10):
+        super().__init__(name)
+        self.duration = duration
+
+    def tick(self, agent, world_state):
+        agent.state = 'doing_action'
+        agent.action_duration = self.duration
+        agent.current_action = "Taking a short break to recharge"
+        agent.current_goal = "Resting to regain some energy"
+        agent.add_log("Ah, much better. Taking a moment to rest here.", world_state['time'], world_state['day_of_week'])
+        
+        # Significantly decrease energy need
+        agent.needs['energy'] = max(0, agent.needs['energy'] - 70)
+        
+        # Clear the temporary activity
+        agent.current_activity = None
+
+        return NodeStatus.RUNNING
+
+    def simulate(self, agent, world_state, prev_summary):
+        final_needs = prev_summary.final_needs.copy()
+        final_needs['energy'] = max(0, final_needs['energy'] - 70)
         return SimulationSummary(final_needs, prev_summary.final_money)
 
 class Idle(Node):
@@ -447,8 +502,19 @@ def create_agent_bt(agent, world_state):
     root = Selector(f"Behavior Tree Root for {agent.name}", children=[
         # --- Emergency Reactions First ---
         Sequence("Emergency: Go Home When Exhausted", children=[
-            IsAgentTired("Am I completely exhausted?", threshold=15),
+            IsAgentTired("Am I completely exhausted?", threshold=95),
             PlanPathToHome("Emergency path home")
+        ]),
+        # --- Urgent, but not critical reactions ---
+        Sequence("Urgent: Rest when tired", children=[
+            IsAgentTired("Am I tired?", threshold=70),
+            Selector("Rest Behavior", children=[
+                Sequence("I am at a rest location", children=[
+                    IsAtActivityLocation("Am I at the rest spot?"),
+                    ExecuteRest("Take a short rest")
+                ]),
+                PlanPathToRestLocation("Find a place to rest")
+            ])
         ]),
         Sequence("Critical: Find Food When Starving", children=[
             IsNeedCritical("Am I starving?", 'hunger', threshold=85),

@@ -177,6 +177,7 @@ SCHEDULE_TEMPLATES = {
             (13, 18): "intensive_work_at_office",
             (18, 20): "dinner_at_cafe",
             (20, 22): "socialize_at_park",
+            (22, 1): "party_at_bar",
         },
         'weekends': {
             (9, 11): "weekend_work_at_office",

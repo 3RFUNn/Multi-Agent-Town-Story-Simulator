@@ -185,6 +185,16 @@ class ExecuteActivity(Node):
 
         if activity == "socialize_at_park":
             # Custom logic for socializing in the park
+            hour, _ = world_state['time']
+            # Socializing is scheduled from 20:00 to 22:00.
+            if hour >= 22:
+                # If it's past the scheduled time, don't start new conversations.
+                agent.current_action = "Winding down from socializing"
+                agent.current_goal = "The evening is ending, time to think about what's next."
+                # Returning SUCCESS here effectively ends the 'socialize_at_park' activity for this tick.
+                # The agent will become idle, and the schedule will be re-evaluated in the next manager tick.
+                return NodeStatus.SUCCESS
+
             park_coords = world_state['places']['central_park']['coords']
             
             # Find other idle agents in the park who are also here to socialize
@@ -205,7 +215,7 @@ class ExecuteActivity(Node):
             # Found a partner
             partner = random.choice(potential_partners)
             
-            interaction_duration = random.randint(20, 30) # Slightly longer conversations
+            interaction_duration = random.randint(8, 15) # Reduced conversation time
             
             # Set both agents to interacting
             agent.state = 'interacting'

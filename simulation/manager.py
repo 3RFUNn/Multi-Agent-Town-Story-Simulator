@@ -40,7 +40,7 @@ class AgentManager:
         self.world_layout = world_layout
         self.days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
         self.world_state = { 
-            'time': (9, 0),
+            'time': (8, 0),  # Start at 8 AM
             'day_index': 0,
             'day_of_week': self.days[0],
             'places': places_data,
@@ -65,7 +65,7 @@ class AgentManager:
         print(f"Initialized {len(self.agents)} agents.")
 
     def _update_agent_schedules(self):
-        hour, _ = self.world_state['time']
+        hour, minute = self.world_state['time']
         day_of_week = self.world_state['day_of_week']
         schedule_type = 'weekdays' if day_of_week not in ['Saturday', 'Sunday'] else 'weekends'
 
@@ -75,10 +75,13 @@ class AgentManager:
 
             current_schedule = agent.schedule_template.get(schedule_type, {})
             activity_found = False
-            if 22 <= hour or hour < 7:
+            
+            # Sleep schedule - different agents have different sleep patterns
+            if self._is_sleep_time(agent, hour):
                 agent.current_activity = "sleep_at_home"
                 activity_found = True
             else:
+                # Check scheduled activities
                 for (start_hour, end_hour), activity in current_schedule.items():
                     if start_hour <= hour < end_hour:
                         agent.current_activity = activity
@@ -88,6 +91,20 @@ class AgentManager:
             if not activity_found:
                 agent.current_activity = None
 
+    def _is_sleep_time(self, agent, hour):
+        """Determine if it's sleep time based on agent personality"""
+        if 'lazy' in agent.personality_names:
+            # Lazy agents sleep more (10 PM to 10 AM)
+            return hour >= 22 or hour < 10
+        elif 'workaholic' in agent.personality_names:
+            # Workaholics sleep less (1 AM to 6 AM)
+            return hour >= 1 and hour < 6
+        elif 'fitness_enthusiast' in agent.personality_names:
+            # Fitness enthusiasts have early bedtime (10 PM to 6 AM)
+            return hour >= 22 or hour < 6
+        else:
+            # Normal sleep schedule (11 PM to 8 AM)
+            return hour >= 23 or hour < 8
 
     def _find_adjacent_spot(self, target_x, target_y, occupied_positions):
         directions = [(0, 1), (0, -1), (1, 0), (-1, 0), (1, 1), (1, -1), (-1, 1), (-1, -1)]
@@ -97,6 +114,31 @@ class AgentManager:
             if (adj_x, adj_y) not in occupied_positions:
                 return (adj_x, adj_y)
         return None
+
+    def _get_agent_home_target(self, agent, occupied_positions):
+        """Get a target position in the agent's home area"""
+        home_x, home_y = agent.home['x'], agent.home['y']
+        
+        # Map agent home positions to the correct place
+        if home_x <= 5 and home_y <= 5:  # North houses
+            home_coords = self.world_state['places']['north_houses']['coords']
+        elif home_x <= 5 and 13 <= home_y <= 17:  # Central houses  
+            home_coords = self.world_state['places']['central_houses']['coords']
+        elif home_x <= 5 and home_y >= 18:  # South houses
+            home_coords = self.world_state['places']['south_houses']['coords']
+        elif home_x >= 18 and home_y <= 5:  # Student accommodation
+            home_coords = self.world_state['places']['student_accommodation']['coords']
+        else:
+            # Fallback to exact position
+            home_coords = [(home_x, home_y)]
+        
+        # Find an available spot in the home area
+        available_spots = [pos for pos in home_coords if pos not in occupied_positions]
+        if available_spots:
+            return random.choice(available_spots)
+        else:
+            # If all spots occupied, return the original home position
+            return (home_x, home_y)
 
     def tick(self):
         hour, minute = self.world_state['time']
@@ -130,12 +172,21 @@ class AgentManager:
             if agent.state in ['doing_action', 'interacting']:
                 agent.action_duration -= 1
                 
-                # BUG FIX: Only earn money if at the correct work location
-                is_working = "work" in (agent.current_activity or "")
+                # BUG FIX: Only earn money if at the correct work location and doing work activities
+                is_working = ("work" in (agent.current_activity or "") or 
+                             "shift" in (agent.current_activity or "") or
+                             "classes" in (agent.current_activity or ""))
+                
                 if agent.state == 'doing_action' and is_working:
                     work_location_data = self.world_state['places'].get(agent.work_location, {})
                     if work_location_data and (agent.x, agent.y) in work_location_data.get('coords', []):
-                        agent.money += 0.5
+                        # Different earning rates based on job type
+                        if "shift" in (agent.current_activity or ""):
+                            agent.money += 0.8  # Cafe workers earn more per hour
+                        elif "classes" in (agent.current_activity or ""):
+                            agent.money += 0.3  # Students earn less (part-time)
+                        else:
+                            agent.money += 0.5  # Office workers standard rate
                 
                 if agent.action_duration <= 0:
                     if agent.state == 'interacting' and agent.interacting_with:
@@ -167,7 +218,8 @@ class AgentManager:
                         if target_agent:
                             target_pos = self._find_adjacent_spot(target_agent.x, target_agent.y, occupied_positions)
                     elif location_name and "home" in location_name:
-                        target_pos = (agent.home['x'], agent.home['y'])
+                        # Get the appropriate home location based on agent's home position
+                        target_pos = self._get_agent_home_target(agent, occupied_positions)
                     elif location_name:
                         target_location = self.world_state['places'].get(location_name)
                         if target_location and target_location.get('coords'):

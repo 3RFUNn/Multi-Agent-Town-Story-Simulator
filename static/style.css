@@ -68,16 +68,17 @@ body {
 
 /* Base colors for cell types */
 .grass { background-color: #a7f3d0; }
-.path { background-color: #cbd5e1; }
-.house { background-color: #fecaca; }
-.cafe { background-color: #fcd34d; }
+.path { background-color: #e2e8f0; }
+.house { background-color: #fca5a5; }
+.cafe { background-color: #fbbf24; }
 .park { background-color: #86efac; }
-.supply_store { background-color: #bfdbfe; }
-.college { background-color: #e9d5ff; }
-.grocery_pharmacy { background-color: #fdbf8b; }
-.college_dorm { background-color: #c7d2fe; }
-.bar { background-color: #fbcfe8; }
-.co_living { background-color: #b0e0e6; } /* Light blue for co-living */
+.supply_store { background-color: #93c5fd; }
+.college { background-color: #c4b5fd; }
+.grocery_pharmacy { background-color: #fdba74; }
+.bar { background-color: #f9a8d4; }
+.office { background-color: #6ee7b7; }
+.gym { background-color: #fde047; }
+.accommodation { background-color: #a5b4fc; }
 
 /* SVG icon styling for buildings */
 .grid-cell svg {

@@ -183,6 +183,48 @@ class ExecuteActivity(Node):
         if not activity: 
             return NodeStatus.FAILURE
 
+        if activity == "socialize_at_park":
+            # Custom logic for socializing in the park
+            park_coords = world_state['places']['central_park']['coords']
+            
+            # Find other idle agents in the park who are also here to socialize
+            potential_partners = [
+                other for other in world_state['agents'].values()
+                if other.id != agent.id and
+                   other.current_activity == 'socialize_at_park' and
+                   (other.x, other.y) in park_coords and
+                   other.state == 'idle'
+            ]
+
+            if not potential_partners:
+                agent.current_action = "Looking for someone to talk to"
+                agent.current_goal = "Enjoying the park atmosphere and waiting to socialize"
+                # Return SUCCESS so the agent can try again next tick if the schedule is still active
+                return NodeStatus.SUCCESS 
+
+            # Found a partner
+            partner = random.choice(potential_partners)
+            
+            interaction_duration = random.randint(20, 30) # Slightly longer conversations
+            
+            # Set both agents to interacting
+            agent.state = 'interacting'
+            agent.interacting_with = partner.id
+            agent.action_duration = interaction_duration
+            agent.current_goal = f"Chatting with {partner.name}."
+            agent.add_log(f"I've started a conversation with {partner.name} at the park.", world_state['time'], world_state['day_of_week'])
+            agent.needs['social'] = 0 # Reset social need
+
+            partner.state = 'interacting'
+            partner.interacting_with = agent.id
+            partner.action_duration = interaction_duration
+            partner.current_goal = f"Chatting with {agent.name}."
+            partner.add_log(f"{agent.name} came over to talk. We're having a nice chat.", world_state['time'], world_state['day_of_week'])
+            partner.needs['social'] = 0 # Reset social need
+            
+            # This action is now running (the interaction itself)
+            return NodeStatus.RUNNING
+
         activity_data = world_state['activity_data'].get(activity, {})
         cost = activity_data.get('cost', 0)
 
@@ -287,6 +329,7 @@ class ExecuteActivity(Node):
         """Update agent needs based on the specific activity"""
         if "eat" in activity or "lunch" in activity or "dinner" in activity or "breakfast" in activity:
             agent.needs['hunger'] = max(0, agent.needs['hunger'] - 50)
+            agent.needs['energy'] = max(0, agent.needs['energy'] - 20) # Eating also restores some energy
         elif "coffee" in activity:
             agent.needs['hunger'] = max(0, agent.needs['hunger'] - 15)
             agent.needs['energy'] = max(0, agent.needs['energy'] - 15) # Coffee reduces tiredness
@@ -317,6 +360,7 @@ class ExecuteActivity(Node):
         # Simulate need changes
         if "eat" in activity or "lunch" in activity or "dinner" in activity:
             final_needs['hunger'] = max(0, final_needs['hunger'] - 50)
+            final_needs['energy'] = max(0, final_needs['energy'] - 20)
         if "socialize" in activity or "drinks" in activity:
             final_needs['social'] = max(0, final_needs['social'] - 60)
         if "workout" in activity or "gym" in activity:

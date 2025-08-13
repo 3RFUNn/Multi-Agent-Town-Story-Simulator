@@ -80,17 +80,17 @@ SCHEDULE_TEMPLATES = {
             (12, 13): "lunch_break_at_cafe",
             (13, 17): "work_at_office",
             (17, 18): "evening_workout_at_gym",
-            (18, 19): "dinner_at_cafe",
-            (19, 21): "socialize_at_park",
-            (21, 23): "drinks_at_bar",
+            (18, 20): "dinner_at_cafe",
+            (20, 22): "socialize_at_park",
         },
         'weekends': {
             (9, 11): "lazy_morning_at_home",
             (11, 13): "workout_at_gym",
             (13, 15): "lunch_and_shopping_grocery",
-            (15, 17): "socialize_at_park",
-            (17, 19): "dinner_at_cafe",
-            (19, 1): "party_at_bar",
+            (15, 18): "leisure_time_at_park",
+            (18, 20): "dinner_at_cafe",
+            (20, 22): "socialize_at_park",
+            (22, 1): "party_at_bar",
         }
     },
     'student_conscientious': {
@@ -100,9 +100,8 @@ SCHEDULE_TEMPLATES = {
             (12, 13): "lunch_at_cafe",
             (13, 16): "afternoon_classes_at_college",
             (16, 18): "study_at_college",
-            (18, 19): "dinner_at_accommodation",
-            (19, 21): "evening_study_at_accommodation",
-            (21, 22): "relax_at_park",
+            (18, 20): "dinner_at_accommodation",
+            (20, 22): "socialize_at_park",
         },
         'weekends': {
             (9, 11): "sleep_in_at_accommodation",
@@ -110,7 +109,7 @@ SCHEDULE_TEMPLATES = {
             (13, 16): "study_session_at_college",
             (16, 18): "exercise_at_gym",
             (18, 20): "dinner_and_groceries",
-            (20, 22): "social_time_at_park",
+            (20, 22): "socialize_at_park",
         }
     },
     'cafe_worker_social': {
@@ -121,7 +120,6 @@ SCHEDULE_TEMPLATES = {
             (17, 18): "grocery_shopping",
             (18, 20): "dinner_at_home",
             (20, 22): "socialize_at_park",
-            (22, 24): "evening_drinks_at_bar",
         },
         'weekends': {
             (10, 12): "lazy_morning_at_home",
@@ -129,7 +127,8 @@ SCHEDULE_TEMPLATES = {
             (14, 16): "personal_time_at_park",
             (16, 18): "workout_at_gym",
             (18, 20): "dinner_with_friends_at_cafe",
-            (20, 1): "nightlife_at_bar",
+            (20, 22): "socialize_at_park",
+            (22, 1): "nightlife_at_bar",
         }
     },
     'fitness_enthusiast': {
@@ -141,17 +140,16 @@ SCHEDULE_TEMPLATES = {
             (13, 17): "work_at_office",
             (17, 19): "evening_training_at_gym",
             (19, 20): "dinner_at_home",
-            (20, 22): "recovery_walk_at_park",
+            (20, 22): "socialize_at_park",
         },
         'weekends': {
             (7, 9): "intensive_workout_at_gym",
             (9, 10): "post_workout_meal_at_cafe",
             (10, 12): "grocery_shopping_healthy",
             (12, 14): "meal_prep_at_home",
-            (14, 16): "outdoor_activities_at_park",
-            (16, 18): "social_workout_at_gym",
+            (14, 18): "outdoor_activities_at_park",
             (18, 20): "healthy_dinner_at_home",
-            (20, 22): "relaxation_at_park",
+            (20, 22): "socialize_at_park",
         }
     },
     'lazy_sleeper': {
@@ -160,17 +158,15 @@ SCHEDULE_TEMPLATES = {
             (11, 12): "late_breakfast_at_cafe",
             (12, 16): "minimal_work_at_office",
             (16, 17): "coffee_break_at_cafe",
-            (17, 19): "finish_work_at_office",
-            (19, 21): "easy_dinner_at_home",
-            (21, 23): "leisure_time_at_park",
+            (17, 20): "finish_work_at_office",
+            (20, 22): "socialize_at_park",
         },
         'weekends': {
             (11, 13): "sleep_in_at_home",
             (13, 15): "brunch_at_cafe",
-            (15, 17): "lazy_afternoon_at_park",
-            (17, 19): "minimal_shopping_grocery",
-            (19, 21): "takeout_dinner_at_home",
-            (21, 23): "casual_socializing_at_bar",
+            (15, 18): "lazy_afternoon_at_park",
+            (18, 20): "takeout_dinner_at_home",
+            (20, 22): "socialize_at_park",
         }
     },
     'workaholic_ambitious': {
@@ -179,18 +175,16 @@ SCHEDULE_TEMPLATES = {
             (8, 12): "focused_work_at_office",
             (12, 13): "working_lunch_at_office",
             (13, 18): "intensive_work_at_office",
-            (18, 19): "dinner_at_cafe",
-            (19, 22): "overtime_work_at_office",
-            (22, 23): "late_evening_at_home",
+            (18, 20): "dinner_at_cafe",
+            (20, 22): "socialize_at_park",
         },
         'weekends': {
             (9, 11): "weekend_work_at_office",
             (11, 12): "coffee_break_at_cafe",
             (12, 15): "personal_projects_at_office",
             (15, 17): "networking_at_cafe",
-            (17, 19): "dinner_meeting_at_cafe",
-            (19, 21): "business_drinks_at_bar",
-            (21, 23): "planning_at_home",
+            (17, 20): "dinner_meeting_at_cafe",
+            (20, 22): "socialize_at_park",
         }
     },
 }

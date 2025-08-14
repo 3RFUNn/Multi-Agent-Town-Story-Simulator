@@ -2,10 +2,11 @@
 
 import os
 import datetime
+import shutil
 from simulation.llm_handler import LLMHandler
 
-DAILY_LOG_DIR = os.path.join(os.path.dirname(__file__), 'daily_logs')
-os.makedirs(DAILY_LOG_DIR, exist_ok=True)
+DAILY_STORY_DIR = os.path.join(os.path.dirname(__file__), 'daily_stories')
+os.makedirs(DAILY_STORY_DIR, exist_ok=True)
 
 class NarrativeSystem:
     """
@@ -14,45 +15,48 @@ class NarrativeSystem:
     def __init__(self, llm_handler):
         self.llm = llm_handler
 
-    def write_agent_diary(self, agent, day_name):
-        # Compose a rich, context-aware prompt for the agent's diary
+    def write_agent_diary(self, agent, day_name, day_number):
+        # Compose a diary prompt influenced by personality and behaviors
         memories = agent.memory_stream.get_memories_for_day(day_name)
         background = getattr(agent, 'background', "")
+        personality = ', '.join(agent.personality_names)
         prompt = (
             f"You are {agent.name}, a resident of a lively town.\n"
             f"Background: {background}\n"
+            f"Personality traits: {personality}\n"
             f"Today is {day_name}. Here are your key memories and experiences for the day:\n"
             f"" + "\n".join([f"- {m.event}" for m in memories]) + "\n"
-            "Write a detailed, believable diary entry for this day. Include your thoughts, feelings, and any notable events or interactions. Use a natural, personal tone. End with a reflection or hope for tomorrow."
+            "Write a casual, personal diary entry for this day, reflecting your personality and behaviors. Mention what you did, how you felt, and any notable events or interactions. Be natural and authentic, not poetic or dramatic. End with a simple reflection or thought for tomorrow."
         )
         diary_entry = self.llm.generate_narrative(prompt)
-        log_path = os.path.join(DAILY_LOG_DIR, f"{agent.id}_{day_name}.txt")
-        with open(log_path, 'a', encoding='utf-8') as f:
+        day_folder = os.path.join(DAILY_STORY_DIR, f"day_{day_number}")
+        os.makedirs(day_folder, exist_ok=True)
+        log_path = os.path.join(day_folder, f"{agent.id}_{day_name}.txt")
+        with open(log_path, 'w', encoding='utf-8') as f:
             f.write(diary_entry + "\n")
         return diary_entry
 
-    def compile_daily_story(self, agent_ids, day_name):
+    def compile_daily_story(self, agent_ids, day_name, day_number):
         # Read all agent diaries for the day
+        day_folder = os.path.join(DAILY_STORY_DIR, f"day_{day_number}")
         entries = []
         for agent_id in agent_ids:
-            log_path = os.path.join(DAILY_LOG_DIR, f"{agent_id}_{day_name}.txt")
+            log_path = os.path.join(day_folder, f"{agent_id}_{day_name}.txt")
             if os.path.exists(log_path):
                 with open(log_path, 'r', encoding='utf-8') as f:
                     entries.append(f.read())
-        # Compose a rich prompt for the town-wide story
+        # Compose a narrative prompt for the town-wide story
         prompt = (
             f"Here are the diary entries of all agents for {day_name}:\n"
             f"" + "\n---\n".join(entries) + "\n"
-            "Write a vivid, engaging story summarizing the day in the town. Capture the atmosphere, major events, and how the lives of the agents intertwined. Use a narrative style as if you are a storyteller describing the town's day for a local newspaper. End with a closing remark or teaser for the next day."
+            "Write a rich, descriptive narrative about how the day unfolded for the town and its people. Describe the atmosphere, the interactions, and how the agents' personalities shaped their experiences. Make it engaging and immersive, as if telling the story of the town's day. End with a closing thought or anticipation for tomorrow."
         )
         story = self.llm.generate_narrative(prompt)
-        story_path = os.path.join(DAILY_LOG_DIR, f"{day_name}_story.txt")
+        story_path = os.path.join(day_folder, f"{day_name}_story.txt")
         with open(story_path, 'w', encoding='utf-8') as f:
             f.write(story)
         return story
 
-    def reset_agent_diaries(self, agent_ids, day_name):
-        for agent_id in agent_ids:
-            log_path = os.path.join(DAILY_LOG_DIR, f"{agent_id}_{day_name}.txt")
-            if os.path.exists(log_path):
-                os.remove(log_path)
+    def reset_agent_diaries(self, agent_ids, day_name, day_number):
+        # No deletion needed; diaries are now stored per day in daily_stories
+        pass

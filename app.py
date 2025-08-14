@@ -35,8 +35,8 @@ def static_files(filename):
 
 # Add this function to emit daily stories
 def emit_daily_story(story_data):
-    # story_data: {'day': day_name, 'text': story}
-    emit('new_daily_story', story_data, broadcast=True)
+    # Use socketio.emit to ensure correct context
+    socketio.emit('new_daily_story', story_data, broadcast=True)
 
 # --- SocketIO Event Handlers ---
 @socketio.on('connect')

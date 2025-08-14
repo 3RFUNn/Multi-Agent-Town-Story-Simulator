@@ -76,6 +76,12 @@ class AgentManager:
         schedule_type = 'weekdays' if day_of_week not in ['Saturday', 'Sunday'] else 'weekends'
 
         for agent in self.agents.values():
+            # If agent's activity is over (e.g., socializing after 22:00), force idle and allow schedule update
+            if agent.current_activity == "socialize_at_park":
+                hour, _ = self.world_state['time']
+                if hour >= 22:
+                    agent.state = 'idle'
+                    agent.current_activity = None
             if agent.state in ['interacting', 'moving']:
                 continue
 
@@ -260,7 +266,7 @@ class AgentManager:
                     else:
                         agent.state = 'idle'
                         if location_name:
-                             agent.add_log(f"I can't go to {location_name}, there's no space.", self.world_state['time'], self.world_state['day_of_week'])
+                            agent.add_log(f"I can't go to {location_name}, there's no space.", self.world_state['time'], self.world_state['day_of_week'])
 
                 if agent.path and agent.path_index < len(agent.path):
                     next_pos = agent.path[agent.path_index]
@@ -333,15 +339,17 @@ class AgentManager:
             'day_of_week': self.world_state['day_of_week']
         }
 
-        # Write daily logs and story at 2 AM
+        # Write daily logs and story at 2 AM for the previous day
         if hour == 2 and minute == 0:
-            day_name = self.days[day_index]
+            prev_day_index = (day_index - 1) % 7
+            prev_day_name = self.days[prev_day_index]
+            day_number = day_index if hour != 0 else day_index + 1
             agent_ids = [agent.id for agent in self.agents.values()]
             for agent in self.agents.values():
-                self.narrative_system.write_agent_diary(agent, day_name)
-            story = self.narrative_system.compile_daily_story(agent_ids, day_name)
-            self.daily_stories.append({'day': day_name, 'text': story})
-            self.narrative_system.reset_agent_diaries(agent_ids, day_name)
-            emit_daily_story({'day': day_name, 'text': story})
+                self.narrative_system.write_agent_diary(agent, prev_day_name, day_number)
+            story = self.narrative_system.compile_daily_story(agent_ids, prev_day_name, day_number)
+            self.daily_stories.append({'day': prev_day_name, 'text': story})
+            self.narrative_system.reset_agent_diaries(agent_ids, prev_day_name, day_number)
+            emit_daily_story({'day': prev_day_name, 'text': story})
 
         return [], state_payload

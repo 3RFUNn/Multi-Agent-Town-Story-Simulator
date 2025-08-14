@@ -438,26 +438,25 @@ class PlanPathToHome(Node):
         return SimulationSummary(final_needs, prev_summary.final_money)
 
 class PlanPathToRestLocation(Node):
-    """Plans a path to a location to rest, like a park or cafe."""
+    """Plans a path to a location to rest, like a park or cafe. Only chooses one and stays there."""
     def __init__(self, name):
         super().__init__(name)
         self.rest_locations = ['central_park', 'downtown_cafe']
 
     def tick(self, agent, world_state):
-        # Find a nearby rest location
-        chosen_location = random.choice(self.rest_locations)
-        agent.destination_name = chosen_location
+        # Only choose a rest location once per rest event
+        if not hasattr(agent, 'rest_location') or agent.rest_location is None:
+            agent.rest_location = random.choice(self.rest_locations)
+            agent.rest_ticks = 0
+        agent.destination_name = agent.rest_location
         agent.state = 'moving'
-        agent.current_goal = f"Going to the {chosen_location.replace('_', ' ')} to rest for a bit"
-        
-        # Set a temporary activity that will be executed upon arrival
+        agent.current_goal = f"Going to the {agent.rest_location.replace('_', ' ')} to rest for a bit"
         agent.current_activity = "take_a_short_rest"
         world_state['activity_data']['take_a_short_rest'] = {
-            "location": chosen_location,
+            "location": agent.rest_location,
             "cost": 0
         }
-
-        agent.add_log(f"I'm feeling tired, so I'll head to the {chosen_location.replace('_', ' ')} to recharge.", world_state['time'], world_state['day_of_week'])
+        agent.add_log(f"I'm feeling tired, so I'll head to the {agent.rest_location.replace('_', ' ')} to recharge.", world_state['time'], world_state['day_of_week'])
         return NodeStatus.SUCCESS
 
     def simulate(self, agent, world_state, prev_summary):
@@ -476,19 +475,67 @@ class ExecuteRest(Node):
         agent.action_duration = self.duration
         agent.current_action = "Taking a short break to recharge"
         agent.current_goal = "Resting to regain some energy"
+        agent.rest_ticks += 1
+        if agent.rest_ticks >= 1:
+            agent.needs['energy'] = max(0, agent.needs['energy'] - 70)
+            agent.rest_location = None
+            agent.rest_ticks = 0
+            agent.current_activity = None
         agent.add_log("Ah, much better. Taking a moment to rest here.", world_state['time'], world_state['day_of_week'])
-        
-        # Significantly decrease energy need
-        agent.needs['energy'] = max(0, agent.needs['energy'] - 70)
-        
-        # Clear the temporary activity
-        agent.current_activity = None
-
         return NodeStatus.RUNNING
 
     def simulate(self, agent, world_state, prev_summary):
         final_needs = prev_summary.final_needs.copy()
         final_needs['energy'] = max(0, final_needs['energy'] - 70)
+        return SimulationSummary(final_needs, prev_summary.final_money)
+
+class PlanPathToEatLocation(Node):
+    """Plans a path to a cafe to eat when hungry. Only chooses once per hunger event."""
+    def __init__(self, name):
+        super().__init__(name)
+        self.eat_location = 'downtown_cafe'
+
+    def tick(self, agent, world_state):
+        if not hasattr(agent, 'eat_ticks') or agent.eat_ticks is None:
+            agent.eat_ticks = 0
+        agent.destination_name = self.eat_location
+        agent.state = 'moving'
+        agent.current_goal = f"Going to the cafe to eat and refuel"
+        agent.current_activity = "eat_at_cafe"
+        world_state['activity_data']['eat_at_cafe'] = {
+            "location": self.eat_location,
+            "cost": 10
+        }
+        agent.add_log(f"I'm really hungry, so I'll head to the cafe to eat.", world_state['time'], world_state['day_of_week'])
+        return NodeStatus.SUCCESS
+
+    def simulate(self, agent, world_state, prev_summary):
+        final_needs = prev_summary.final_needs.copy()
+        final_needs['energy'] = min(100, final_needs['energy'] + 2) # Pathfinding cost
+        return SimulationSummary(final_needs, prev_summary.final_money)
+
+class ExecuteEat(Node):
+    """A specific action for the agent to eat and recover hunger."""
+    def __init__(self, name, duration=10):
+        super().__init__(name)
+        self.duration = duration
+
+    def tick(self, agent, world_state):
+        agent.state = 'doing_action'
+        agent.action_duration = self.duration
+        agent.current_action = "Eating at the cafe"
+        agent.current_goal = "Refueling and satisfying hunger"
+        agent.eat_ticks += 1
+        if agent.eat_ticks >= 1:
+            agent.needs['hunger'] = max(0, agent.needs['hunger'] - 70)
+            agent.eat_ticks = 0
+            agent.current_activity = None
+        agent.add_log("That meal hit the spot. Feeling much better now.", world_state['time'], world_state['day_of_week'])
+        return NodeStatus.RUNNING
+
+    def simulate(self, agent, world_state, prev_summary):
+        final_needs = prev_summary.final_needs.copy()
+        final_needs['hunger'] = max(0, final_needs['hunger'] - 70)
         return SimulationSummary(final_needs, prev_summary.final_money)
 
 class Idle(Node):
@@ -572,7 +619,8 @@ def create_agent_bt(agent, world_state):
         ]),
         Sequence("Critical: Find Food When Starving", children=[
             IsNeedCritical("Am I starving?", 'hunger', threshold=85),
-            # This could trigger an emergency food-finding behavior
+            PlanPathToEatLocation("Find a place to eat"),
+            ExecuteEat("Eat at the location")
         ]),
         
         # --- Then, execute normal behavior ---

@@ -45,13 +45,13 @@ class NarrativeSystem:
             if os.path.exists(log_path):
                 with open(log_path, 'r', encoding='utf-8') as f:
                     entries.append(f.read())
-        # Compose a narrative prompt for the town-wide story
+        # Compose a more realistic, human narrative prompt for the town-wide story
         prompt = (
             f"Here are the diary entries of all agents for {day_name}:\n"
             f"" + "\n---\n".join(entries) + "\n"
-            "Write a rich, descriptive narrative about how the day unfolded for the town and its people. Describe the atmosphere, the interactions, and how the agents' personalities shaped their experiences. Make it engaging and immersive, as if telling the story of the town's day. End with a closing thought or anticipation for tomorrow."
+            "Write a realistic, human-like summary of how the day went for the town and its people. Focus on the atmosphere, the events, and how people felt. Use clear, natural language, avoid advanced or novel-like storytelling. Make it sound like a real person describing the day in a sensible, relatable way. End with a simple closing thought or anticipation for tomorrow."
         )
-        story = self.llm.generate_narrative(prompt)
+        story = self.llm.generate_narrative(prompt, max_tokens=2048)
         story_path = os.path.join(day_folder, f"{day_name}_story.txt")
         with open(story_path, 'w', encoding='utf-8') as f:
             f.write(story)

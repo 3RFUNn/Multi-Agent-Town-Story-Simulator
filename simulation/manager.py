@@ -339,8 +339,8 @@ class AgentManager:
             'day_of_week': self.world_state['day_of_week']
         }
 
-        # Write daily logs and story at 2 AM for the previous day
-        if hour == 2 and minute == 0:
+        # Write daily logs and story at 3 AM for the previous day
+        if hour == 3 and minute == 0:
             prev_day_index = (day_index - 1) % 7
             prev_day_name = self.days[prev_day_index]
             day_number = day_index if hour != 0 else day_index + 1

@@ -1,13 +1,16 @@
 # simulation/llm_handler.py
 
 import requests
+from dotenv import load_dotenv
+import os
 
 class LLMHandler:
     """
-    Handles interaction with the OpenAI GPT-4.1 Nano API for narrative and embedding generation.
+    Handles interaction with the OpenAI GPT-4.1 mini API for narrative and embedding generation.
     """
     def __init__(self, api_key=None, model="gpt-4.1-mini"):
-        self.api_key = api_key or "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"  # <-- Place your API key here
+        load_dotenv()
+        self.api_key = api_key or os.getenv("API_KEY")
         self.model = model
         self.base_url = "https://api.openai.com/v1/chat/completions"  # No trailing slash per OpenAI docs
         self.embedding_url = "https://api.openai.com/v1/embeddings"

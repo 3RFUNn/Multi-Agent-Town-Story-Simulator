@@ -132,46 +132,38 @@ def generate_charts(results, agent_logs, daily_story):
     plt.tight_layout(rect=[0, 0, 1, 0.96])
     plt.show()
 
+# --- Analysis for All Days ---
+
+def analyze_all_days(base_dir):
+    day_dirs = [d for d in os.listdir(base_dir) if os.path.isdir(os.path.join(base_dir, d)) and d.startswith('day_')]
+    for day in sorted(day_dirs):
+        day_path = os.path.join(base_dir, day)
+        files = sorted([f for f in os.listdir(day_path) if f.endswith('.txt')])
+        if len(files) < 7:
+            print(f"Skipping {day}: not enough files (found {len(files)})")
+            continue
+        agent_log_files = [os.path.join(day_path, f) for f in files[:6]]
+        daily_story_file = os.path.join(day_path, files[-1])
+        try:
+            agent_logs_content = []
+            for file_path in agent_log_files:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    agent_logs_content.append(f.read())
+            with open(daily_story_file, 'r', encoding='utf-8') as f:
+                daily_story_content = f.read()
+            print(f"\n--- Analyzing {day} ---")
+            analysis_results = analyze_narratives(agent_logs_content, daily_story_content)
+            print(f"Semantic Similarity Score: {analysis_results['semantic_similarity']:.4f}")
+            print(f"Keyword Overlap: {analysis_results['keyword_overlap_percentage']:.2f}%")
+            print(f"Entity Overlap: {analysis_results['entity_overlap_percentage']:.2f}%")
+            generate_charts(analysis_results, agent_logs_content, daily_story_content)
+        except FileNotFoundError as e:
+            print(f"Error: Could not find a file in {day}. {e.filename}")
+        except Exception as e:
+            print(f"An unexpected error occurred in {day}: {e}")
+
 # --- Main Execution Block ---
 
 if __name__ == "__main__":
-    # Define the file paths for the agent logs and the daily story
-    base_dir = os.path.join("simulation", "narrative", "daily_stories", "day_1")
-    agent_log_files = [
-        os.path.join(base_dir, "alex_Monday.txt"),
-        os.path.join(base_dir, "bella_Monday.txt"),
-        os.path.join(base_dir, "charlie_Monday.txt"),
-        os.path.join(base_dir, "diana_Monday.txt"),
-        os.path.join(base_dir, "ethan_Monday.txt"),
-        os.path.join(base_dir, "fiona_Monday.txt")
-    ]
-    daily_story_file = os.path.join(base_dir, "Monday_story.txt")
-
-    # Read the content from all the files
-    try:
-        agent_logs_content = []
-        for file_path in agent_log_files:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                agent_logs_content.append(f.read())
-
-        with open(daily_story_file, 'r', encoding='utf-8') as f:
-            daily_story_content = f.read()
-
-        # Run the analysis
-        analysis_results = analyze_narratives(agent_logs_content, daily_story_content)
-
-        # Print the results to the console
-        print("--- Narrative Analysis Results ---")
-        print(f"Semantic Similarity Score: {analysis_results['semantic_similarity']:.4f}")
-        print(f"Keyword Overlap: {analysis_results['keyword_overlap_percentage']:.2f}%")
-        print(f"Entity Overlap: {analysis_results['entity_overlap_percentage']:.2f}%")
-        print("---------------------------------")
-
-        # Generate and display the charts
-        generate_charts(analysis_results, agent_logs_content, daily_story_content)
-
-    except FileNotFoundError as e:
-        print(f"Error: Could not find a file. Please make sure the file paths are correct.")
-        print(f"File not found: {e.filename}")
-    except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+    base_dir = os.path.join("simulation", "narrative", "daily_stories")
+    analyze_all_days(base_dir)

@@ -2,24 +2,25 @@
 
 ## Overview
 
-This project aims to create a narrative-based simulation system for games, research, and interactive storytelling. It models a vibrant small town populated by generative agents, each with unique personalities, schedules, and relationships. Agents interact, follow daily routines, and record their experiences in diary logs. At the end of each day, a town-wide narrative is compiled from these logs using a language model. The system features a real-time web visualization and tools for analyzing the cohesion between agent logs and the daily story.
+This project is a narrative-driven multi-agent town simulation for games, research, and interactive storytelling. It models a vibrant small town populated by generative agents, each with unique personalities, schedules, and relationships. Agents interact, follow daily routines, and record their experiences in diary logs. At the end of each day, a town-wide narrative is compiled from these logs using a language model. The system features a real-time web visualization and tools for analyzing the cohesion between agent logs and the daily story.
 
 ## Goals
 
-- Develop a framework for emergent narrative generation in simulated environments.
-- Enable dynamic, believable agent behaviors and interactions.
-- Provide tools for analyzing and visualizing narrative coherence.
-- Support applications in games, research, and AI-driven storytelling.
+- Framework for emergent narrative generation in simulated environments.
+- Dynamic, believable agent behaviors and interactions.
+- Tools for analyzing and visualizing narrative coherence.
+- Support for games, research, and AI-driven storytelling.
 
 ## Features
 
 - **Multi-Agent Simulation**: Agents with distinct personalities, needs, and relationships.
 - **Behavior Trees**: Decision-making logic for agent actions (work, socialize, rest, eat, etc.).
-- **Daily Diaries**: Each agent writes a diary entry summarizing their day.
-- **Town Narrative**: A daily story is generated from all agent diaries using an LLM (OpenAI API).
-- **Web Visualization**: Interactive frontend to observe agent activities and town events.
+- **Daily Diaries & Town Stories**: Each agent writes a diary entry; a daily story is generated from all diaries using an LLM (OpenAI API).
+- **Web Visualization**: Interactive frontend (HTML/CSS/JS) to observe agent activities, town events, and inspect agents/locations. Includes agent roster, needs bars, daily story panel, and simulation log.
+- **Pause/Resume Simulation**: Control simulation flow from the UI.
 - **Narrative Analysis**: NLP-based tools to measure semantic similarity and content overlap between agent logs and the daily story.
-- **Customizable Agents and Towns**: Easily add new agents, behaviors, and map layouts.
+- **Customizable Agents, Behaviors, and Towns**: Easily add new agents, behaviors, and map layouts.
+- **API Key via .env**: OpenAI API key can be set in `.env` for secure access.
 
 ## Project Structure
 
@@ -29,7 +30,7 @@ command.py              # Simulation runner and backend-frontend communication
 narrative_analyzer.py   # Narrative analysis and visualization
 behavior/               # Agent behavior trees and decision logic
 simulation/             # Core simulation logic, agent definitions, LLM handler, memory, narrative system
-static/                 # Frontend files (HTML, CSS, JS, map data)
+static/                 # Frontend files (index.html, style.css, script.js, map_data.json)
 simulation/narrative/daily_stories/ # Generated agent diaries and town stories
 LICENSE                 # Project license
 README.md               # Project documentation
@@ -45,12 +46,12 @@ README.md               # Project documentation
 
 2. **Install Python dependencies**:
    ```
-   pip install flask flask-socketio spacy scikit-learn matplotlib matplotlib-venn
+   pip install flask flask-socketio spacy scikit-learn matplotlib matplotlib-venn python-dotenv
    python -m spacy download en_core_web_sm
    ```
 
-3. **(Optional) Set up OpenAI API key**:
-   - Add your OpenAI API key in `simulation/llm_handler.py` or as an environment variable.
+3. **Set up OpenAI API key**:
+   - Add your OpenAI API key to `.env` as `API_KEY=sk-...`
 
 ## Usage
 
@@ -80,8 +81,9 @@ README.md               # Project documentation
 - **Simulation Engine**: Managed by `simulation/manager.py`, which updates agent states, schedules, and interactions.
 - **Memory & Diaries**: Agents record experiences in memory streams (`simulation/memory/memory.py`). Diaries are generated daily using prompts and the LLM (`simulation/narrative/narrative_system.py`).
 - **Town Story**: At the end of each day, agent diaries are compiled into a town-wide story using the LLM.
-- **Frontend**: `static/index.html`, `static/script.js`, and `static/style.css` provide a real-time visualization of the town and agents.
+- **Frontend**: `static/index.html`, `static/script.js`, and `static/style.css` provide a real-time visualization of the town and agents, including agent selection, needs bars, daily story panel, and simulation log.
 - **Narrative Analysis**: `narrative_analyzer.py` uses NLP to compare agent logs and the daily story, visualizing semantic similarity and content overlap.
+- **API Key Management**: Uses `python-dotenv` to load API keys from `.env`.
 
 ## Customization
 
@@ -89,6 +91,7 @@ README.md               # Project documentation
 - **Modify Behaviors**: Edit or extend behavior trees in `behavior/agent_behaviors.py`.
 - **Change Map**: Update `static/map_data.json` for new town layouts.
 - **Adjust Prompts**: Modify diary and story prompts in `simulation/narrative/narrative_system.py`.
+- **Frontend UI**: Customize `static/index.html`, `static/style.css`, and `static/script.js` for new panels, styles, or features.
 
 ## Applications
 
@@ -106,4 +109,5 @@ This project is licensed under the MIT License. See `LICENSE` for details.
 - spaCy for NLP
 - Flask & SocketIO for web backend
 - matplotlib & matplotlib-venn for visualization
+- python-dotenv for environment variable management
 

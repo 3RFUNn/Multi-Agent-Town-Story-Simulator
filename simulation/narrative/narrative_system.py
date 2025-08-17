@@ -1,4 +1,5 @@
 # simulation/narrative/narrative_system.py
+# Handles diary log generation for agents and compiles daily town stories using LLM.
 
 import os
 import datetime
@@ -11,11 +12,14 @@ os.makedirs(DAILY_STORY_DIR, exist_ok=True)
 class NarrativeSystem:
     """
     Handles diary log generation for agents and compiles daily town stories.
+    Uses LLM to generate natural language diaries and town-wide stories.
     """
+
     def __init__(self, llm_handler):
         self.llm = llm_handler
 
     def write_agent_diary(self, agent, day_name, day_number):
+        """Generates a diary entry for an agent for a given day using LLM."""
         # Compose a diary prompt influenced by personality and behaviors
         memories = agent.memory_stream.get_memories_for_day(day_name)
         background = getattr(agent, 'background', "")
@@ -39,6 +43,7 @@ class NarrativeSystem:
         return diary_entry
 
     def compile_daily_story(self, agent_ids, day_name, day_number):
+        """Compiles a town-wide story for a given day from all agent diaries using LLM."""
         # Read all agent diaries for the day
         day_folder = os.path.join(DAILY_STORY_DIR, f"day_{day_number}")
         entries = []
@@ -65,5 +70,6 @@ class NarrativeSystem:
         return story
 
     def reset_agent_diaries(self, agent_ids, day_name, day_number):
+        """Resets agent diaries for a given day (no deletion needed, stored per day)."""
         # No deletion needed; diaries are now stored per day in daily_stories
         pass

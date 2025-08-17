@@ -1,4 +1,5 @@
 # simulation/llm_handler.py
+# Handles interaction with the OpenAI GPT-4.1 mini API for narrative and embedding generation.
 
 import requests
 from dotenv import load_dotenv
@@ -7,7 +8,9 @@ import os
 class LLMHandler:
     """
     Handles interaction with the OpenAI GPT-4.1 mini API for narrative and embedding generation.
+    Provides methods for generating narratives, embeddings, and checking API connectivity.
     """
+
     def __init__(self, api_key=None, model="gpt-4.1-mini"):
         load_dotenv()
         self.api_key = api_key or os.getenv("API_KEY")
@@ -16,6 +19,7 @@ class LLMHandler:
         self.embedding_url = "https://api.openai.com/v1/embeddings"
 
     def generate_narrative(self, prompt, max_tokens=512):
+        """Generates a narrative response from the LLM based on the given prompt."""
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
@@ -35,6 +39,7 @@ class LLMHandler:
         return response.json()['choices'][0]['message']['content']
 
     def get_embedding(self, text):
+        """Retrieves an embedding vector for the given text from the LLM API."""
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
@@ -52,7 +57,7 @@ class LLMHandler:
         return response.json()['data'][0]['embedding']
 
     def check_llm_api(self):
-        """Check if the OpenAI LLM API is reachable and working."""
+        """Checks if the OpenAI LLM API is reachable and working."""
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"

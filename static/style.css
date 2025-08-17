@@ -1,3 +1,10 @@
+/*
+style.css
+Main stylesheet for Generative Agent Simulation frontend.
+Defines layout, colors, and UI components for map, agents, panels, and needs bars.
+Uses utility classes and custom styles for a clean, modern look.
+*/
+
 body {
     font-family: 'Inter', sans-serif;
     background-color: #f0f4f8; /* Light blue-gray background */

@@ -1,4 +1,5 @@
 # simulation/entities.py
+# Defines the Agent class and related logic for agent state, needs, relationships, and memory.
 
 import random
 from simulation.config import PERSONALITY_TRAITS, RELATIONSHIPS
@@ -6,8 +7,7 @@ from simulation.config import PERSONALITY_TRAITS, RELATIONSHIPS
 class Agent:
     """
     Represents an agent in the simulation, holding all its state and attributes.
-    This class has been refactored to support more complex states like personality,
-    relationships, and a dynamic memory stream.
+    Supports personality, relationships, dynamic memory, and simulation needs.
     """
     def __init__(self, agent_id, name, icon, color, home_pos, personality, schedule_template, work_location, background=None):
         self.id = agent_id

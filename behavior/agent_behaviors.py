@@ -1,4 +1,6 @@
-# behavior/agent_behaviors.py
+# agent_behaviors.py
+# Defines agent behavior tree nodes and logic for simulation agents.
+# Each node represents a condition or action in the agent's decision-making process.
 
 from .behavior_tree import Node, NodeStatus, Selector, Sequence, StatefulSelector, SimulationSummary
 import random
@@ -21,7 +23,7 @@ class IsNeedCritical(Node):
         return prev_summary
 
 class IsAgentTired(Node):
-    """Specific and common check for the agent's energy level."""
+    """Checks if the agent's energy level is above a threshold."""
     def __init__(self, name, threshold=75):
         super().__init__(name)
         self.threshold = threshold
@@ -174,6 +176,7 @@ class FindAgentToTalkTo(Node):
         return SimulationSummary(final_needs, prev_summary.final_money)
 
 class ExecuteActivity(Node):
+    """Executes the agent's current scheduled activity."""
     def __init__(self, name, duration=8):
         super().__init__(name)
         self.duration = duration
@@ -383,6 +386,7 @@ class ExecuteActivity(Node):
         return SimulationSummary(final_needs, final_money)
 
 class PlanPathToActivityLocation(Node):
+    """Plans a path to the location of the agent's scheduled activity."""
     def __init__(self, name):
         super().__init__(name)
 
@@ -422,6 +426,7 @@ class PlanPathToActivityLocation(Node):
         return SimulationSummary(final_needs, prev_summary.final_money)
 
 class PlanPathToHome(Node):
+    """Plans a path to the agent's home location."""
     def __init__(self, name):
         super().__init__(name)
 
@@ -438,7 +443,7 @@ class PlanPathToHome(Node):
         return SimulationSummary(final_needs, prev_summary.final_money)
 
 class PlanPathToRestLocation(Node):
-    """Plans a path to a location to rest, like a park or cafe. Only chooses one and stays there."""
+    """Plans a path to a location to rest, like a park or cafe."""
     def __init__(self, name):
         super().__init__(name)
         self.rest_locations = ['central_park', 'downtown_cafe']
@@ -465,7 +470,7 @@ class PlanPathToRestLocation(Node):
         return SimulationSummary(final_needs, prev_summary.final_money)
 
 class ExecuteRest(Node):
-    """A specific action for the agent to rest and recover energy."""
+    """Action for the agent to rest and recover energy."""
     def __init__(self, name, duration=10):
         super().__init__(name)
         self.duration = duration
@@ -490,7 +495,7 @@ class ExecuteRest(Node):
         return SimulationSummary(final_needs, prev_summary.final_money)
 
 class PlanPathToEatLocation(Node):
-    """Plans a path to a cafe to eat when hungry. Only chooses once per hunger event."""
+    """Plans a path to a cafe to eat when hungry."""
     def __init__(self, name):
         super().__init__(name)
         self.eat_location = 'downtown_cafe'
@@ -515,7 +520,7 @@ class PlanPathToEatLocation(Node):
         return SimulationSummary(final_needs, prev_summary.final_money)
 
 class ExecuteEat(Node):
-    """A specific action for the agent to eat and recover hunger."""
+    """Action for the agent to eat and recover hunger."""
     def __init__(self, name, duration=10):
         super().__init__(name)
         self.duration = duration
@@ -539,7 +544,7 @@ class ExecuteEat(Node):
         return SimulationSummary(final_needs, prev_summary.final_money)
 
 class Idle(Node):
-    """The default state if no other action is taken."""
+    """Default state if no other action is taken."""
     def __init__(self, name):
         super().__init__(name)
 
@@ -566,8 +571,8 @@ class Idle(Node):
 # --- Behavior Tree Construction ---
 def create_agent_bt(agent, world_state):
     """
-    Creates the complete, hierarchical Behavior Tree for an agent.
-    Enhanced structure with better reactivity and personality-driven decisions.
+    Creates the hierarchical Behavior Tree for an agent.
+    Structure is organized by priority: critical needs, scheduled activities, and free time/social behaviors.
     """
 
     # --- Level 4: Default & Social Behaviors (Lowest Priority) ---

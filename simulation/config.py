@@ -1,11 +1,15 @@
 # simulation/config.py
+# Contains configuration for agent personalities, relationships, schedules, and activities.
+# Used to initialize agent state and simulation logic.
+
 import random
 
 # ==================================================================================================
 # AGENT PERSONALITY AND RELATIONSHIP CONFIGURATION
 # ==================================================================================================
 
-# Define more nuanced personality traits. These can be used to influence BT decisions.
+# --- Personality Traits ---
+# Defines nuanced personality traits for agents, influencing behavior tree decisions.
 PERSONALITY_TRAITS = {
     'extrovert': {'social_motivation': 1.5, 'talkativeness': 0.8, 'prefers_group': True},
     'introvert': {'social_motivation': 0.5, 'talkativeness': 0.3, 'prefers_group': False},
@@ -19,8 +23,8 @@ PERSONALITY_TRAITS = {
     'social_butterfly': {'party_motivation': 0.9, 'networking': 0.8},
 }
 
-# Define initial relationships between agents
-# Affinity is on a scale of 0-100
+# --- Relationships ---
+# Initial relationships between agents. Affinity is on a scale of 0-100.
 RELATIONSHIPS = {
     'alex': {
         'bella': {'type': 'colleague', 'affinity': 70},
@@ -71,7 +75,8 @@ RELATIONSHIPS = {
 # AGENT SCHEDULE AND ACTIVITY CONFIGURATION
 # ==================================================================================================
 
-# Templates for schedules to reduce redundancy. Agents can be assigned these templates.
+# --- Schedule Templates ---
+# Templates for agent schedules, organized by role/personality.
 SCHEDULE_TEMPLATES = {
     'office_worker_extrovert': {
         'weekdays': {
@@ -191,8 +196,8 @@ SCHEDULE_TEMPLATES = {
     },
 }
 
-# This dictionary maps activities to their required location and cost.
-# It's expanded with more activities to support the new schedules.
+# --- Activity Data ---
+# Maps activities to their required location and cost.
 ACTIVITY_DATA = {
     # Work Activities
     "work_at_office": {"location": "business_office", "cost": 0},
@@ -291,6 +296,7 @@ ACTIVITY_DATA = {
 # AGENT CONFIGURATION
 # ==================================================================================================
 
+# --- Agent Configuration ---
 AGENT_CONFIG = [
     {
         'id': 'alex', 'name': 'Alex Rodriguez', 'icon': 'AR', 'color': '#FF6B6B',

@@ -1,42 +1,49 @@
+<!--
+index.html
+Main frontend page for Generative Agent Simulation.
+Provides UI for simulation time, agent roster, inspector, log, and daily stories.
+Uses Tailwind CSS for styling and Socket.IO for real-time updates.
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Generative Agent Simulation</title>
+    <!-- Tailwind CSS for utility-first styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/style.css">
+    <!-- Socket.IO for real-time communication -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
 </head>
 <body>
+    <!-- Main app container -->
     <div id="app-container">
+        <!-- Simulation area: map, time, controls, daily stories -->
         <div id="game-area">
             <h1 class="text-3xl font-bold text-gray-900 mb-2">Generative Agent Simulation</h1>
             <div id="simulation-time" class="text-lg font-semibold text-gray-700 mb-4">Monday, 09:00 AM</div>
             <div id="game-grid-wrapper" tabindex="0">
-                <div id="game-grid-container">
-                    </div>
+                <div id="game-grid-container"></div>
             </div>
             <div class="mt-4 flex gap-4">
                 <button id="pause-resume-btn" class="px-6 py-2 bg-yellow-500 text-white rounded-lg shadow-md hover:bg-yellow-600 transition-colors">
                     Pause Simulation
                 </button>
             </div>
-
+            <!-- Daily story panel for town-wide stories -->
             <div id="daily-story-panel" class="mt-8 p-4 bg-white rounded-lg shadow-lg max-h-[400px] overflow-y-auto">
                 <h2 class="text-xl font-semibold text-gray-800 mb-3">Town Daily Stories</h2>
                 <ul id="daily-story-list" class="space-y-2"></ul>
             </div>
         </div>
-
+        <!-- UI panel: agent roster, inspector, log -->
         <div id="ui-panel">
             <div class="panel-section">
                 <h2 class="text-xl font-semibold text-gray-800 mb-3">Agent Roster</h2>
-                <div id="agent-selection-panel" class="flex flex-wrap gap-2 justify-center">
-                    </div>
+                <div id="agent-selection-panel" class="flex flex-wrap gap-2 justify-center"></div>
             </div>
-
             <div class="panel-section">
                 <h2 id="inspector-title" class="text-xl font-semibold text-gray-800 mb-3">Inspector</h2>
                 <div id="inspector-output">
@@ -45,15 +52,13 @@
                 <div id="inspector-goal" class="mt-2"></div>
                 <div id="inspector-needs" class="mt-2"></div>
             </div>
-
             <div class="panel-section">
                 <h2 id="main-log-title" class="text-xl font-semibold text-gray-800 mb-3">Simulation Log</h2>
-                <div id="log-output">
-                    </div>
+                <div id="log-output"></div>
             </div>
         </div>
     </div>
-
+    <!-- Main frontend logic -->
     <script src="/script.js"></script>
 </body>
 </html>

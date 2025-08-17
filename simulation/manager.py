@@ -1,4 +1,5 @@
 # simulation/manager.py
+# Manages agent initialization, simulation ticks, schedules, pathfinding, and daily story generation.
 
 import random
 from .entities import Agent
@@ -38,6 +39,10 @@ def find_path_bfs(start_x, start_y, target_x, target_y, world_layout, occupied_p
     return None
 
 class AgentManager:
+    """
+    Manages all agents, their schedules, state updates, and simulation ticks.
+    Handles daily story generation and agent interactions.
+    """
     def __init__(self, world_layout, places_data):
         self.agents = {}
         self.world_layout = world_layout
@@ -55,6 +60,7 @@ class AgentManager:
         self._initialize_agents()
 
     def _initialize_agents(self):
+        """Initializes agents from configuration and sets up their behavior trees."""
         for config in AGENT_CONFIG:
             agent = Agent(
                 agent_id=config['id'], name=config['name'], icon=config['icon'], color=config['color'],
@@ -71,6 +77,7 @@ class AgentManager:
         print(f"Initialized {len(self.agents)} agents.")
 
     def _update_agent_schedules(self):
+        """Updates each agent's activity based on the current time and schedule."""
         hour, minute = self.world_state['time']
         day_of_week = self.world_state['day_of_week']
         schedule_type = 'weekdays' if day_of_week not in ['Saturday', 'Sunday'] else 'weekends'
@@ -104,7 +111,7 @@ class AgentManager:
                 agent.current_activity = None
 
     def _is_sleep_time(self, agent, hour):
-        """Determine if it's sleep time based on agent personality"""
+        """Determines if it's sleep time for the agent based on personality."""
         if 'lazy' in agent.personality_names:
             # Lazy agents sleep more (10 PM to 10 AM)
             return hour >= 22 or hour < 10
@@ -119,6 +126,7 @@ class AgentManager:
             return hour >= 23 or hour < 8
 
     def _find_adjacent_spot(self, target_x, target_y, occupied_positions):
+        """Finds an available adjacent spot near a target position."""
         directions = [(0, 1), (0, -1), (1, 0), (-1, 0), (1, 1), (1, -1), (-1, 1), (-1, -1)]
         random.shuffle(directions)
         for dx, dy in directions:
@@ -128,7 +136,7 @@ class AgentManager:
         return None
 
     def _get_agent_home_target(self, agent, occupied_positions):
-        """Get a target position in the agent's home area"""
+        """Gets a target position in the agent's home area."""
         home_x, home_y = agent.home['x'], agent.home['y']
         
         # Map agent home positions to the correct place
@@ -153,6 +161,7 @@ class AgentManager:
             return (home_x, home_y)
 
     def tick(self):
+        """Advances the simulation by one tick, updating agent states and generating stories."""
         hour, minute = self.world_state['time']
         day_index = self.world_state['day_index']
         

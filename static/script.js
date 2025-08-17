@@ -1,3 +1,8 @@
+// script.js
+// Main frontend logic for Generative Agent Simulation.
+// Handles map rendering, agent avatars, UI updates, Socket.IO events, and simulation controls.
+// All major functions and event handlers are documented below.
+
 // --- Configuration & Global State ---
 const CELL_SIZE = 40;
 let isEngineReady = false;
@@ -29,6 +34,7 @@ const dom = {
 
 const socket = io();
 
+// --- Socket.IO Event Handlers ---
 socket.on('connect', () => logToMain('Successfully connected to simulation server.'));
 socket.on('command_client_ready', () => {
     logToMain('Simulation engine is ready. Starting visualization.');
@@ -93,6 +99,19 @@ socket.on('new_daily_story', (storyData) => {
         renderFullDailyStories();
     }
 });
+
+// --- UI Rendering Functions ---
+// createAgentAvatar: Creates and displays agent avatars on the map.
+// updateAgentAvatar: Updates agent avatar position and interaction state.
+// inspectAgent: Shows agent details in the inspector panel.
+// inspectMapCell: Shows location details in the inspector panel.
+// logToMain: Adds messages to the main simulation log.
+// renderLog: Renders log entries in the log panel.
+// renderMap: Draws the simulation map grid and cells.
+// highlightSelection: Highlights selected agent/avatar in UI.
+// renderAgentSelectionPanel: Renders agent roster buttons.
+// renderDailyStoryPanel: Renders daily story list in the UI.
+// addDailyStory: Adds a new daily story to the list.
 
 function createAgentAvatar(agent) {
     const agentDiv = document.createElement('div');
@@ -248,6 +267,8 @@ function addDailyStory(day, text) {
     renderDailyStoryPanel();
 }
 
+// --- Simulation Controls ---
+// Pause/resume button toggles simulation state and updates UI.
 dom.pauseBtn.addEventListener('click', () => {
     isSimulationPaused = !isSimulationPaused;
     if (isSimulationPaused) {
@@ -263,6 +284,8 @@ dom.pauseBtn.addEventListener('click', () => {
     logToMain(`Simulation ${isSimulationPaused ? 'paused' : 'resumed'}.`);
 });
 
+// --- Initialization ---
+// initialize: Loads map data and sets up the frontend UI.
 async function initialize() {
     logToMain('Frontend loaded. Fetching map data...');
     try {
@@ -299,4 +322,5 @@ async function initialize() {
     }
 }
 
+// --- Main Entry Point ---
 window.onload = initialize;

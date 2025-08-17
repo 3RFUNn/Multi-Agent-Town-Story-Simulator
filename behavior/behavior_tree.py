@@ -1,38 +1,32 @@
 # behavior/behavior_tree.py
+# Defines the core behavior tree node types and logic for agent decision-making.
+# Includes Selector, Sequence, and StatefulSelector nodes, as well as simulation utilities.
 
 from enum import Enum
 import random
 
-# A data structure to encapsulate the predicted outcome of an action.
-# This will be used by the heuristic planning system later, but we define it here.
 class SimulationSummary:
+    """Encapsulates the predicted outcome of an action for planning and heuristics."""
     def __init__(self, final_needs, final_money):
         self.final_needs = final_needs
         self.final_money = final_money
 
-# Function to score the desirability of a simulated outcome.
-# We define this here to be used by the StatefulSelector.
 def heuristic_function(agent, initial_summary, final_summary):
+    """
+    Scores the desirability of a simulated outcome based on changes in needs and money.
+    Higher scores indicate more desirable outcomes.
+    """
     score = 0
-    # Higher score for fulfilling needs. For all needs, a lower value is better.
     for need, initial_value in initial_summary.final_needs.items():
         final_value = final_summary.final_needs.get(need, initial_value)
-        
-        # For all needs, a lower final value is better (need is reduced).
         change = initial_value - final_value
-        
-        # Weight needs differently, e.g., hunger and energy are more critical
         weight = 1.5 if need in ['hunger', 'energy'] else 1.0
         score += change * weight
 
-    # Higher score for gaining money
     money_change = final_summary.final_money - initial_summary.final_money
-    score += money_change * 0.5 # Weight money gain
-
-    # Normalize score to be between 0 and 1 for simplicity
-    normalized_score = 1 / (1 + max(0, -score)) # Simple sigmoid-like normalization
+    score += money_change * 0.5
+    normalized_score = 1 / (1 + max(0, -score))
     return normalized_score
-
 
 class NodeStatus(Enum):
     """Represents the possible return statuses of a Behavior Tree node."""
@@ -48,15 +42,13 @@ class Node:
 
     def tick(self, agent, world_state):
         """
-        This method is called every simulation tick.
-        It must be implemented by all subclasses.
+        Called every simulation tick. Must be implemented by subclasses.
         """
         raise NotImplementedError
 
     def simulate(self, agent, world_state, prev_summary):
         """
-        This method is used for the lookahead simulation.
-        It must be implemented by all subclasses.
+        Used for lookahead simulation. Must be implemented by subclasses.
         """
         raise NotImplementedError
 
@@ -69,9 +61,8 @@ class Node:
 
 class Selector(Node):
     """
-    A Selector node ('?') executes its children in order until one succeeds.
-    It is 'stateless' and re-evaluates from the first child on every tick.
-    Ideal for high-priority, reactive checks.
+    Executes children in order until one succeeds. Used for high-priority, reactive checks.
+    Stateless: re-evaluates from the first child every tick.
     """
     def __init__(self, name, children=None):
         super().__init__(name)
@@ -81,24 +72,18 @@ class Selector(Node):
         for child in self.children:
             status = child.tick(agent, world_state)
             if status != NodeStatus.FAILURE:
-                # If a child is RUNNING or SUCCEEDS, the selector returns that status
                 return status
-        # All children failed
         return NodeStatus.FAILURE
 
     def simulate(self, agent, world_state, prev_summary):
-        # This is a stateless selector, so simulation is tricky.
-        # For now, we assume the first successful simulation path is taken.
         for child in self.children:
-            # In a real scenario, we might check if a simulated path is viable
             return child.simulate(agent, world_state, prev_summary)
         return prev_summary
 
 class StatefulSelector(Node):
     """
-    A stateful selector commits to a chosen child branch and continues to tick it
-    until it succeeds or fails. It only re-evaluates its choice when it is not
-    already running a child. This prevents the agent from "changing its mind" every tick.
+    Commits to a chosen child branch and continues to tick it until it succeeds or fails.
+    Uses a heuristic to select the best child branch for the agent.
     """
     def __init__(self, name, children=None):
         super().__init__(name)
@@ -127,8 +112,6 @@ class StatefulSelector(Node):
 
     def simulate_child(self, child, agent, world_state, initial_summary):
         """Simulates a child node's execution to predict the outcome."""
-        # This is a simplified simulation for the heuristic.
-        # A full implementation would involve deeper state cloning.
         sim_agent = agent 
         
         final_needs = sim_agent.needs.copy()
@@ -162,7 +145,6 @@ class StatefulSelector(Node):
         return status
 
     def simulate(self, agent, world_state, prev_summary):
-        # The selector itself doesn't change the state, its children do.
         best_child = self._select_best_child(agent, world_state)
         if best_child:
             return best_child.simulate(agent, world_state, prev_summary)
@@ -174,10 +156,8 @@ class StatefulSelector(Node):
 
 class Sequence(Node):
     """
-    A Sequence node ('->') executes its children in order.
-    It returns FAILURE as soon as a child fails.
-    If all children succeed, it returns SUCCESS.
-    It is now stateful and correctly handles the RUNNING state.
+    Executes children in order. Returns FAILURE as soon as a child fails.
+    Returns SUCCESS if all children succeed. Handles RUNNING state.
     """
     def __init__(self, name, children=None):
         super().__init__(name)
@@ -190,7 +170,7 @@ class Sequence(Node):
             status = child.tick(agent, world_state)
 
             if status == NodeStatus.SUCCESS:
-                child.reset() # Reset successful child before moving to the next
+                child.reset()
                 self.current_child_index += 1
                 continue
             
@@ -208,7 +188,6 @@ class Sequence(Node):
     def simulate(self, agent, world_state, prev_summary):
         current_sim_summary = prev_summary
         for child in self.children:
-            # Pass the result of the previous simulation to the next
             current_sim_summary = child.simulate(agent, world_state, current_sim_summary)
         return current_sim_summary
 

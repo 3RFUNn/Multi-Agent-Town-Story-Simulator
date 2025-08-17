@@ -1,3 +1,7 @@
+# narrative_analyzer.py
+# Analyzes agent diaries and daily stories for narrative cohesion and content overlap.
+# Uses spaCy, TF-IDF, and matplotlib for NLP and visualization.
+
 import os
 import spacy
 from sklearn.feature_extraction.text import TfidfVectorizer

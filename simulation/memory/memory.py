@@ -1,10 +1,12 @@
 # simulation/memory/memory.py
+# Defines agent memory structures for storing and retrieving daily events and experiences.
 
 import datetime
 
 class Memory:
     """
     Represents a single memory entry for an agent.
+    Stores event details, timestamp, and related agents.
     """
     def __init__(self, event, timestamp=None, related_agents=None, details=None):
         self.event = event
@@ -23,6 +25,7 @@ class Memory:
 class AgentMemoryStream:
     """
     Stores all memories for an agent, including relationships, daily activities, and notable events.
+    Provides methods for adding, retrieving, and resetting daily memories.
     """
     def __init__(self):
         self.memories = []

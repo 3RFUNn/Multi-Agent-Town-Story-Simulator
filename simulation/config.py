@@ -276,11 +276,11 @@ ACTIVITY_DATA = {
     "relaxation_at_park": {"location": "central_park", "cost": 0},
 
     # Shopping & Errands
-    "grocery_shopping": {"location": "grocery_store", "cost": 50},
-    "lunch_and_shopping_grocery": {"location": "grocery_store", "cost": 55},
-    "dinner_and_groceries": {"location": "grocery_store", "cost": 65},
-    "grocery_shopping_healthy": {"location": "grocery_store", "cost": 60},
-    "minimal_shopping_grocery": {"location": "grocery_store", "cost": 40},
+    "grocery_shopping": {"location": "grocery_store", "cost": 20},
+    "lunch_and_shopping_grocery": {"location": "grocery_store", "cost": 25},
+    "dinner_and_groceries": {"location": "grocery_store", "cost": 25},
+    "grocery_shopping_healthy": {"location": "grocery_store", "cost": 20},
+    "minimal_shopping_grocery": {"location": "grocery_store", "cost": 20},
 
     # Sleep
     "sleep_at_home": {"location": "home", "cost": 0},

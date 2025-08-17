@@ -198,10 +198,14 @@ class AgentManager:
                              "shift" in (agent.current_activity or "") or
                              "classes" in (agent.current_activity or ""))
                 
+                # --- FIX: Accept any valid work activity at the agent's work location ---
                 if agent.state == 'doing_action' and is_working:
-                    work_location_data = self.world_state['places'].get(agent.work_location, {})
+                    # Get required location for current activity
+                    activity_data = self.world_state['activity_data'].get(agent.current_activity, {})
+                    required_location = activity_data.get('location', None)
+                    work_location_data = self.world_state['places'].get(required_location or agent.work_location, {})
+                    # Accept if agent is at any valid spot for the required work location
                     if work_location_data and (agent.x, agent.y) in work_location_data.get('coords', []):
-                        # Different earning rates based on job type
                         if "shift" in (agent.current_activity or ""):
                             agent.money += 0.8  # Cafe workers earn more per hour
                         elif "classes" in (agent.current_activity or ""):

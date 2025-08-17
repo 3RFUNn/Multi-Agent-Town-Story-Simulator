@@ -51,11 +51,14 @@ class NarrativeSystem:
         prompt = (
             f"Here are the diary entries of all agents for {day_name}:\n"
             f"" + "\n---\n".join(entries) + "\n"
-            "Write a long, highly detailed, but casual and conversational summary of how the day went for the town and its people.\n"
-            "Mention the agents by name when describing their activities, interactions, and notable events.\n"
-            "Use a friendly, natural tone as if you are telling the story to a friend. Cover all important happenings, the atmosphere, and how people felt. End with a relaxed closing or anticipation for tomorrow."
+            "Read all the agents' diaries for the day.\n"
+            "Based on what happened, write a story describing the events, atmosphere, and anything else worth mentioning in the town.\n"
+            "The text level of the story should not be too complex.\n"
+            "Write a long story, but not excessively long.\n"
+            "Keep the output structured, with each line of text reasonably short, so the story is easy to read.\n"
+            "Write it as if it's a plot for a video game or a movie, but not too dramatic or poetic.\n"
         )
-        story = self.llm.generate_narrative(prompt, max_tokens=4096)
+        story = self.llm.generate_narrative(prompt, max_tokens=2048)
         story_path = os.path.join(day_folder, f"{day_name}_story.txt")
         with open(story_path, 'w', encoding='utf-8') as f:
             f.write(story)

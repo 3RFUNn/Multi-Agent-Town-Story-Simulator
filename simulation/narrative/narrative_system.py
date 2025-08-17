@@ -26,9 +26,11 @@ class NarrativeSystem:
             f"Personality traits: {personality}\n"
             f"Today is {day_name}. Here are your key memories and experiences for the day:\n"
             f"" + "\n".join([f"- {m.event}" for m in memories]) + "\n"
-            "Write a casual, personal diary entry for this day, reflecting your personality and behaviors. Mention what you did, how you felt, and any notable events or interactions. Be natural and authentic, not poetic or dramatic. End with a simple reflection or thought for tomorrow."
+            "Write a casual, personal diary entry for this day, reflecting your personality and behaviors.\n"
+            "Mention in detail what you did, how you felt, and all notable events or interactions.\n"
+            "Be natural and authentic, not poetic or dramatic. Make the entry as complete and long as possible, covering the full day. End with a reflection or thought for tomorrow."
         )
-        diary_entry = self.llm.generate_narrative(prompt)
+        diary_entry = self.llm.generate_narrative(prompt, max_tokens=2048)
         day_folder = os.path.join(DAILY_STORY_DIR, f"day_{day_number}")
         os.makedirs(day_folder, exist_ok=True)
         log_path = os.path.join(day_folder, f"{agent.id}_{day_name}.txt")
@@ -49,7 +51,9 @@ class NarrativeSystem:
         prompt = (
             f"Here are the diary entries of all agents for {day_name}:\n"
             f"" + "\n---\n".join(entries) + "\n"
-            "Write a realistic, human-like summary of how the day went for the town and its people. Focus on the atmosphere, the events, and how people felt. Use clear, natural language, avoid advanced or novel-like storytelling. Make it sound like a real person describing the day in a sensible, relatable way. End with a simple closing thought or anticipation for tomorrow."
+            "Write a long, highly detailed, but casual and conversational summary of how the day went for the town and its people.\n"
+            "Mention the agents by name when describing their activities, interactions, and notable events.\n"
+            "Use a friendly, natural tone as if you are telling the story to a friend. Cover all important happenings, the atmosphere, and how people felt. End with a relaxed closing or anticipation for tomorrow."
         )
         story = self.llm.generate_narrative(prompt, max_tokens=4096)
         story_path = os.path.join(day_folder, f"{day_name}_story.txt")

@@ -36,7 +36,7 @@ class Agent:
         self.action_duration = 0
         self.interacting_with = None # ID of agent they are talking to
 
-        self.money = random.randint(50, 200)
+        self.money = random.randint(200, 250)
         self.needs = {
             'hunger': 0,
             'social': 0,

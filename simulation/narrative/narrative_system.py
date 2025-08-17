@@ -51,7 +51,7 @@ class NarrativeSystem:
             f"" + "\n---\n".join(entries) + "\n"
             "Write a realistic, human-like summary of how the day went for the town and its people. Focus on the atmosphere, the events, and how people felt. Use clear, natural language, avoid advanced or novel-like storytelling. Make it sound like a real person describing the day in a sensible, relatable way. End with a simple closing thought or anticipation for tomorrow."
         )
-        story = self.llm.generate_narrative(prompt, max_tokens=2048)
+        story = self.llm.generate_narrative(prompt, max_tokens=4096)
         story_path = os.path.join(day_folder, f"{day_name}_story.txt")
         with open(story_path, 'w', encoding='utf-8') as f:
             f.write(story)

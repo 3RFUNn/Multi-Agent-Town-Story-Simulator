@@ -61,8 +61,37 @@ socket.on('simulation_state_update', (data) => {
     }
 });
 
+// REMOVE OLD DAILY STORY PANEL
+const dailyStoryPanel = document.getElementById('daily-story-panel');
+if (dailyStoryPanel) dailyStoryPanel.remove();
+
+// CREATE NEW PANEL FOR FULL DAILY STORIES
+function renderFullDailyStories() {
+    let panel = document.getElementById('full-daily-story-panel');
+    if (!panel) {
+        panel = document.createElement('div');
+        panel.id = 'full-daily-story-panel';
+        panel.className = 'mt-8 p-4 bg-white rounded-lg shadow-lg max-h-[700px] overflow-y-auto';
+        panel.innerHTML = `<h2 class="text-xl font-semibold text-gray-800 mb-3">All Town Daily Stories</h2><ul id="full-daily-story-list" class="space-y-2"></ul>`;
+        document.getElementById('game-area').appendChild(panel);
+    }
+    const storyList = document.getElementById('full-daily-story-list');
+    storyList.innerHTML = '';
+    DAILY_STORIES.forEach(story => {
+        const li = document.createElement('li');
+        li.className = 'bg-gray-100 p-3 rounded shadow';
+        li.innerHTML = `<strong>${story.day}</strong>:<br><span>${story.text}</span>`;
+        storyList.appendChild(li);
+    });
+}
+
+// Update to use new panel
 socket.on('new_daily_story', (storyData) => {
-    addDailyStory(storyData.day, storyData.text);
+    // Only add if not already present for the same day (prevents duplicates)
+    if (!DAILY_STORIES.some(story => story.day === storyData.day)) {
+        DAILY_STORIES.push({ day: storyData.day, text: storyData.text });
+        renderFullDailyStories();
+    }
 });
 
 function createAgentAvatar(agent) {

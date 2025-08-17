@@ -43,6 +43,9 @@ class Agent:
             'energy': 0,
         }
 
+        self.rest_ticks = 0  # Track rest cycles for ExecuteRest
+        self.eat_ticks = 0   # Track eat cycles for ExecuteEat
+
         self.background = background or f"{name} grew up in this town and has a unique story."
         from simulation.memory.memory import AgentMemoryStream
         self.memory_stream = AgentMemoryStream()

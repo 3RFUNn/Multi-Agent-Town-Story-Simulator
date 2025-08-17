@@ -163,19 +163,19 @@ class AgentManager:
             hour += 1
             if hour >= 24:
                 hour %= 24
-                day_index = (day_index + 1) % 7
+                day_index += 1  # INCREMENT day_index instead of cycling
                 agent_list = list(self.agents.values())
                 random.shuffle(agent_list)
                 for agent in agent_list: # Reset BTs at the start of a new day
                     agent.behavior_tree.reset()
-                print(f"A new day has dawned! It is now {self.days[day_index]}.")
+                print(f"A new day has dawned! It is now {self.days[day_index % 7]} (Day {day_index + 1}).")
                 day_rolled_over = True
-                self._pending_narrative_day = self.days[day_index]
+                self._pending_narrative_day = self.days[day_index % 7]
                 self._pending_narrative = True
 
         self.world_state['time'] = (hour, int(minute))
         self.world_state['day_index'] = day_index
-        self.world_state['day_of_week'] = self.days[day_index]
+        self.world_state['day_of_week'] = self.days[day_index % 7]
 
         self._update_agent_schedules()
         
@@ -341,15 +341,15 @@ class AgentManager:
 
         # Write daily logs and story at 3 AM for the previous day
         if hour == 3 and minute == 0:
-            prev_day_index = (day_index - 1) % 7
-            prev_day_name = self.days[prev_day_index]
-            day_number = day_index if hour != 0 else day_index + 1
+            prev_day_index = day_index - 1
+            prev_day_name = self.days[prev_day_index % 7]
+            day_number = prev_day_index + 1
             agent_ids = [agent.id for agent in self.agents.values()]
             for agent in self.agents.values():
                 self.narrative_system.write_agent_diary(agent, prev_day_name, day_number)
             story = self.narrative_system.compile_daily_story(agent_ids, prev_day_name, day_number)
-            self.daily_stories.append({'day': prev_day_name, 'text': story})
+            self.daily_stories.append({'day': f"Day {day_number} ({prev_day_name})", 'text': story})
             self.narrative_system.reset_agent_diaries(agent_ids, prev_day_name, day_number)
-            emit_daily_story({'day': prev_day_name, 'text': story})
+            emit_daily_story({'day': f"Day {day_number} ({prev_day_name})", 'text': story})
 
         return [], state_payload

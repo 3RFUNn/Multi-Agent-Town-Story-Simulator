@@ -5,26 +5,28 @@
 This project presents a hybrid architectural approach for emergent narrative generation in multi-agent simulations. It integrates deterministic agent control via Behavior Trees (BTs) with creative, post-hoc narrative generation using a Large Language Model (LLM). Agents are controlled by BTs for logical, predictable actions, while the LLM observes agent logs and generates human-readable stories and diaries. The system resolves the classic conflict between authorial control and AI autonomy by decoupling agent behavior from narrative generation, offering a scalable and robust solution for games, research, and interactive storytelling.
 
 ## Table of Contents
-- Abstract
-- Overview
-- Goals
-- Features
-- Project Structure
-- Installation
-- Usage
-- System Architecture
-- Agent Design
-- Behavior Trees
-- Narrative Generation System
-- Frontend Visualization
-- Narrative Analysis
-- Customization
-- Applications
-- Results and Narrative Analysis
-- Discussion and Future Work
-- References
-- License
-- Acknowledgments
+| Section | Link |
+|---------|------|
+| Abstract | [Abstract](#abstract) |
+| Overview | [Overview](#overview) |
+| Goals | [Goals](#goals) |
+| Features | [Features](#features) |
+| Project Structure | [Project Structure](#project-structure) |
+| Installation | [Installation](#installation) |
+| Usage | [Usage](#usage) |
+| System Architecture | [System Architecture](#system-architecture) |
+| Agent Design | [Agent Design and State](#agent-design-and-state) |
+| Behavior Trees | [Behavior Trees](#behavioral-control-behavior-trees) |
+| Narrative Generation System | [Narrative Generation System](#narrative-generation-system) |
+| Frontend Visualization | [Frontend Visualization](#frontend-visualization) |
+| Narrative Analysis | [Narrative Analysis](#narrative-analysis) |
+| Customization | [Customization](#customization) |
+| Applications | [Applications](#applications) |
+| Results and Narrative Analysis | [Results and Narrative Analysis](#results-and-narrative-analysis) |
+| Discussion and Future Work | [Discussion and Future Work](#discussion-and-future-work) |
+| References | [References](#references) |
+| License | [License](#license) |
+| Acknowledgments | [Acknowledgments](#acknowledgments) |
 
 ## Overview
 

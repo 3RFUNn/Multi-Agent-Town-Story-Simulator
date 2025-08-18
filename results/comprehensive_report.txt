@@ -1,0 +1,63 @@
+================================================================================
+NARRATIVE ANALYSIS COMPREHENSIVE REPORT
+================================================================================
+Analysis Date: 2025-08-18 19:38:40
+Total Days Analyzed: 14
+Agents: Alex, Bella, Charlie, Diana, Ethan, Fiona
+TextBlob Available: True
+
+1. DIARY-STORY SIMILARITY ANALYSIS
+----------------------------------------
+Overall Average Similarity: 0.149
+
+Agent Rankings (by average similarity to daily stories):
+1. Alex: 0.175
+2. Charlie: 0.165
+3. Ethan: 0.157
+4. Bella: 0.142
+5. Diana: 0.128
+6. Fiona: 0.125
+
+2. SENTIMENT ANALYSIS
+----------------------------------------
+Agent Rankings (by average sentiment):
+1. Charlie: 0.227 (Positive)
+2. Diana: 0.182 (Positive)
+3. Alex: 0.174 (Positive)
+4. Ethan: 0.168 (Positive)
+5. Fiona: 0.132 (Positive)
+6. Bella: 0.129 (Positive)
+
+3. BEHAVIORAL PATTERN ANALYSIS
+----------------------------------------
+
+Top 3 agents for Positive Emotions:
+  Charlie: 9.4 avg mentions
+  Alex: 6.4 avg mentions
+  Diana: 4.9 avg mentions
+
+Top 3 agents for Negative Emotions:
+  Diana: 0.6 avg mentions
+  Bella: 0.4 avg mentions
+  Ethan: 0.4 avg mentions
+
+Top 3 agents for Social Behavior:
+  Charlie: 10.3 avg mentions
+  Fiona: 8.1 avg mentions
+  Alex: 7.9 avg mentions
+
+Top 3 agents for Work Behavior:
+  Alex: 12.5 avg mentions
+  Ethan: 11.4 avg mentions
+  Diana: 6.2 avg mentions
+
+4. SUMMARY STATISTICS
+----------------------------------------
+Total diary entries analyzed: 84
+Average words per entry: 557.0
+Average sentences per entry: 36.5
+Days with complete data: 14
+
+================================================================================
+END OF REPORT
+================================================================================

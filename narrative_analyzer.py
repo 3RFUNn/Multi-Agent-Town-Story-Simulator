@@ -136,11 +136,37 @@ def generate_charts(results, agent_logs, daily_story):
     plt.tight_layout(rect=[0, 0, 1, 0.96])
     plt.show()
 
+def save_chart(data, labels, title, filename):
+    import matplotlib.pyplot as plt
+    plt.figure(figsize=(10, 6))
+    bars = plt.bar(labels, data, color=['#4A90E2', '#50E3C2', '#B8E986'])
+    plt.ylabel('Score (out of 100)')
+    plt.title(title)
+    plt.ylim(0, 100)
+    for bar in bars:
+        yval = bar.get_height()
+        plt.text(bar.get_x() + bar.get_width()/2.0, yval, f"{yval:.2f}", va='bottom', ha='center')
+    plt.tight_layout()
+    plt.savefig(filename)
+    plt.close()
+
 # --- Analysis for All Days ---
 
 def analyze_all_days(base_dir):
+    results_dir = 'results'
+    os.makedirs(results_dir, exist_ok=True)
     day_dirs = [d for d in os.listdir(base_dir) if os.path.isdir(os.path.join(base_dir, d)) and d.startswith('day_')]
-    for day in sorted(day_dirs):
+    # Sort day_dirs numerically by extracting the number after 'day_'
+    def day_key(day_name):
+        try:
+            return int(day_name.split('_')[1])
+        except (IndexError, ValueError):
+            return 0
+    day_dirs = sorted(day_dirs, key=day_key)
+    all_results = []
+    weekday_results = {}
+    # Collect results for each day
+    for day in day_dirs:
         day_path = os.path.join(base_dir, day)
         files = sorted([f for f in os.listdir(day_path) if f.endswith('.txt')])
         if len(files) < 7:
@@ -155,16 +181,57 @@ def analyze_all_days(base_dir):
                     agent_logs_content.append(f.read())
             with open(daily_story_file, 'r', encoding='utf-8') as f:
                 daily_story_content = f.read()
-            print(f"\n--- Analyzing {day} ---")
             analysis_results = analyze_narratives(agent_logs_content, daily_story_content)
-            print(f"Semantic Similarity Score: {analysis_results['semantic_similarity']:.4f}")
-            print(f"Keyword Overlap: {analysis_results['keyword_overlap_percentage']:.2f}%")
-            print(f"Entity Overlap: {analysis_results['entity_overlap_percentage']:.2f}%")
-            generate_charts(analysis_results, agent_logs_content, daily_story_content)
+            story_filename = os.path.basename(daily_story_file)
+            weekday = story_filename.split('_')[0] if '_' in story_filename else 'Unknown'
+            all_results.append({
+                'day': day,
+                'weekday': weekday,
+                'semantic_similarity': analysis_results['semantic_similarity'],
+                'keyword_overlap_percentage': analysis_results['keyword_overlap_percentage'],
+                'entity_overlap_percentage': analysis_results['entity_overlap_percentage']
+            })
+            if weekday not in weekday_results:
+                weekday_results[weekday] = []
+            weekday_results[weekday].append(all_results[-1])
         except FileNotFoundError as e:
             print(f"Error: Could not find a file in {day}. {e.filename}")
         except Exception as e:
             print(f"An unexpected error occurred in {day}: {e}")
+    # Sort all_results numerically by day before writing outputs
+    def result_day_key(result):
+        try:
+            return int(result['day'].split('_')[1])
+        except (IndexError, ValueError):
+            return 0
+    all_results_sorted = sorted(all_results, key=result_day_key)
+    # Write all days analysis to file
+    with open(os.path.join(results_dir, 'all_days_analysis.txt'), 'w', encoding='utf-8') as f:
+        f.write('Day\tWeekday\tSemanticSimilarity\tKeywordOverlap(%)\tEntityOverlap(%)\n')
+        for result in all_results_sorted:
+            f.write(f"{result['day']}\t{result['weekday']}\t{result['semantic_similarity']:.4f}\t{result['keyword_overlap_percentage']:.2f}\t{result['entity_overlap_percentage']:.2f}\n")
+    # Write weekday comparisons
+    for weekday, results in weekday_results.items():
+        results_sorted = sorted(results, key=result_day_key)
+        with open(os.path.join(results_dir, f"{weekday.lower()}_comparison.txt"), 'w', encoding='utf-8') as f:
+            f.write('Day\tSemanticSimilarity\tKeywordOverlap(%)\tEntityOverlap(%)\n')
+            for result in results_sorted:
+                f.write(f"{result['day']}\t{result['semantic_similarity']:.4f}\t{result['keyword_overlap_percentage']:.2f}\t{result['entity_overlap_percentage']:.2f}\n")
+    # Write full analysis summary
+    with open(os.path.join(results_dir, 'full_analysis.txt'), 'w', encoding='utf-8') as f:
+        f.write('--- All Days Analysis ---\n')
+        for result in all_results_sorted:
+            f.write(f"{result['day']} ({result['weekday']}): SemanticSimilarity={result['semantic_similarity']:.4f}, KeywordOverlap={result['keyword_overlap_percentage']:.2f}%, EntityOverlap={result['entity_overlap_percentage']:.2f}%\n")
+        f.write('\n--- Weekday Comparisons ---\n')
+        for weekday, results in weekday_results.items():
+            results_sorted = sorted(results, key=result_day_key)
+            f.write(f"\n{weekday}:\n")
+            for result in results_sorted:
+                f.write(f"  {result['day']}: SemanticSimilarity={result['semantic_similarity']:.4f}, KeywordOverlap={result['keyword_overlap_percentage']:.2f}%, EntityOverlap={result['entity_overlap_percentage']:.2f}%\n")
+    # Save charts for each analysis type
+    save_chart([r['semantic_similarity']*100 for r in all_results_sorted], [r['day'] for r in all_results_sorted], 'Semantic Similarity Across Days', os.path.join(results_dir, 'semantic_similarity_chart.png'))
+    save_chart([r['keyword_overlap_percentage'] for r in all_results_sorted], [r['day'] for r in all_results_sorted], 'Keyword Overlap Across Days', os.path.join(results_dir, 'keyword_overlap_chart.png'))
+    save_chart([r['entity_overlap_percentage'] for r in all_results_sorted], [r['day'] for r in all_results_sorted], 'Entity Overlap Across Days', os.path.join(results_dir, 'entity_overlap_chart.png'))
 
 # --- Main Execution Block ---
 

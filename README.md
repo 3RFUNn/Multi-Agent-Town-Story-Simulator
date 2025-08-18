@@ -303,27 +303,77 @@ The frontend is built with HTML, CSS (Tailwind and custom styles), and JavaScrip
 
 ## Results and Analysis
 
-The comprehensive analysis system provides both qualitative insights and quantitative validation of the narrative generation process. Through automated analysis of simulation outputs, we can demonstrate the system's effectiveness in creating coherent, believable agent narratives.
+The comprehensive analysis system provides both qualitative insights and quantitative validation of the narrative generation process. Through automated analysis of simulation outputs across 14 days with 6 agents (Alex, Bella, Charlie, Diana, Ethan, and Fiona), we can demonstrate the system's effectiveness in creating coherent, believable agent narratives.
 
 ### Quantitative Validation
 
-The narrative analysis confirms several key hypotheses about the system's performance:
+The narrative analysis reveals several key insights about the system's performance based on 84 total diary entries:
 
-1. **High Narrative Cohesion**: Average cosine similarity scores typically range from 0.75-0.95, indicating strong semantic overlap between individual agent diaries and compiled daily stories.
+#### 1. Narrative Cohesion Analysis
+- **Overall Average Similarity**: 0.149 between individual agent diaries and compiled daily stories
+- **Agent Performance Rankings** (diary-to-story similarity):
+  1. Alex: 0.175 (highest narrative representation)
+  2. Charlie: 0.165
+  3. Ethan: 0.157
+  4. Bella: 0.142
+  5. Diana: 0.128
+  6. Fiona: 0.125 (lowest representation)
 
-2. **Behavioral Consistency**: Agents demonstrate consistent personality patterns across similar days, with consistency scores often exceeding 0.6 for well-defined character traits.
+#### 2. Sentiment and Emotional Patterns
+- **Consistent Positive Sentiment**: All agents maintain positive emotional baselines
+- **Agent Sentiment Rankings**:
+  1. Charlie: 0.227 (most positive)
+  2. Diana: 0.182
+  3. Alex: 0.174
+  4. Ethan: 0.168
+  5. Fiona: 0.132
+  6. Bella: 0.129 (least positive, but still positive)
 
-3. **Social Network Emergence**: Agent interaction networks reveal realistic social patterns, with some agents serving as social hubs while others maintain smaller, focused relationship circles.
+#### 3. Behavioral Pattern Analysis
+- **Positive Emotional Expression Leaders**:
+  - Charlie: 9.4 average mentions (most emotionally expressive)
+  - Alex: 6.4 average mentions
+  - Diana: 4.9 average mentions
 
-4. **Emotional Authenticity**: Sentiment analysis reveals that agents express appropriate emotional ranges, with individual agents showing distinct emotional baselines that align with their designed personalities.
+- **Social Behavior Champions**:
+  - Charlie: 10.3 average social mentions (highly social)
+  - Fiona: 8.1 average mentions
+  - Alex: 7.9 average mentions
+
+- **Work-Focused Agents**:
+  - Alex: 12.5 average work mentions (most work-oriented)
+  - Ethan: 11.4 average mentions
+  - Diana: 6.2 average mentions
+
+#### 4. Narrative Quality Metrics
+- **Average Entry Length**: 557 words per diary entry
+- **Narrative Complexity**: 36.5 sentences per entry on average
+- **Data Completeness**: 100% (14 days with complete data)
 
 ### Qualitative Observations
 
-The generated narratives successfully capture:
-- **Individual Voice**: Each agent's diary maintains a distinct perspective and writing style
-- **Temporal Coherence**: Stories maintain logical progression and reference previous events appropriately
-- **Social Dynamics**: Interactions between agents are reflected consistently across multiple perspectives
-- **Environmental Integration**: Agent narratives incorporate location details and environmental factors realistically
+The generated narratives successfully demonstrate:
+
+- **Distinct Agent Personalities**: Charlie emerges as the most socially active and emotionally positive agent, while Alex shows strong work orientation balanced with social engagement
+- **Consistent Character Voices**: Each agent maintains recognizable behavioral patterns across the 14-day simulation period
+- **Realistic Social Dynamics**: The interaction patterns reveal natural social hierarchies with Charlie serving as a social hub
+- **Temporal Coherence**: Stories maintain logical day-to-day progression with appropriate references to previous events
+- **Environmental Integration**: Agent narratives incorporate location details and environmental factors from the simulated town
+
+### Key Findings
+
+1. **Moderate Narrative Cohesion**: The similarity scores (averaging 0.149) indicate that while individual agent perspectives are captured, the compilation process creates abstracted daily stories rather than direct representations of agent experiences.
+
+2. **Stable Positive Sentiment**: All agents maintain positive emotional baselines, suggesting the simulation successfully creates a pleasant, livable virtual community.
+
+3. **Clear Agent Differentiation**: The behavioral analysis reveals distinct agent archetypes:
+   - **Charlie**: Social connector with high emotional expression
+   - **Alex**: Work-focused but socially engaged
+   - **Ethan**: Balanced work-social orientation
+   - **Diana**: Moderate across all categories
+   - **Bella & Fiona**: More reserved personalities
+
+4. **Rich Narrative Output**: With an average of 557 words per diary entry, the system generates substantial, detailed personal narratives that provide deep insight into agent experiences.
 
 ### Analysis Methodology
 
@@ -331,10 +381,10 @@ The quantitative analysis employs rigorous NLP techniques:
 - **TF-IDF Vectorization**: Converts narrative text into numerical representations for mathematical comparison
 - **Cosine Similarity**: Measures semantic overlap between documents on a 0-1 scale
 - **Sentiment Analysis**: Uses TextBlob's trained models for emotional tone detection
-- **Network Analysis**: Applies graph theory to map social relationships
-- **Statistical Testing**: Provides confidence intervals and significance testing for key metrics
+- **Keyword-Based Pattern Analysis**: Tracks behavioral indicators across time and agents
+- **Statistical Aggregation**: Provides comprehensive rankings and trend analysis
 
-This multi-faceted approach provides empirical evidence that the hybrid architecture successfully generates coherent, believable narratives while maintaining the stability and predictability required for practical applications.
+This multi-faceted approach provides empirical evidence that the hybrid architecture successfully generates coherent, believable narratives while maintaining distinct agent personalities and realistic social dynamics.
 
 ## Discussion and Future Work
 

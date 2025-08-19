@@ -53,6 +53,7 @@ This project models a vibrant small town populated by generative agents, each wi
   - Sentiment analysis and behavioral pattern detection
   - Routine change tracking over time
   - Agent interaction network visualization
+  - System architecture diagram generation
   - Statistical reporting with visualizations
 - **Customizable Agents, Behaviors, and Towns**: Easily add new agents, behaviors, and map layouts.
 - **API Key via .env**: OpenAI API key can be set in `.env` for secure access.
@@ -226,6 +227,14 @@ The `narrative_analyzer.py` module provides a sophisticated analysis toolkit for
   - Interaction frequency matrices
   - Social dynamics visualization
 
+#### 6. System Architecture Diagram Generation
+- **Purpose**: Creates a comprehensive visual representation of the hybrid two-tiered system architecture
+- **Method**: Generates publication-quality diagrams showing the separation between deterministic simulation and LLM narrative generation
+- **Output**:
+  - High-resolution architecture diagram (architecture_diagram.png)
+  - Visual representation of all system components and data flows
+  - Clear illustration of the hybrid approach with architectural principles
+
 ### Key Features of the Analysis System
 
 - **Automated Processing**: Discovers and processes all available simulation days automatically
@@ -254,6 +263,7 @@ results/
 ├── agent_network_graph.png             # Network visualization
 ├── interaction_heatmap.png             # Interaction frequency matrix
 ├── story_day_consistency.csv           # Daily story consistency data
+├── architecture_diagram.png            # System architecture diagram
 └── comprehensive_report.txt            # Executive summary report
 ```
 

@@ -12,6 +12,7 @@ Features:
 - Sentiment analysis and behavioral pattern detection
 - Routine change tracking over time
 - Agent interaction network visualization
+- System architecture diagram generation
 - Comprehensive reporting with statistical summaries
 
 Usage:
@@ -39,6 +40,8 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+from matplotlib.patches import FancyBboxPatch, ConnectionPatch
 import seaborn as sns
 import networkx as nx
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -913,6 +916,296 @@ class NarrativeAnalyzer:
         )
         plt.close()
     
+    def create_architecture_diagram(self) -> None:
+        """
+        Create a comprehensive system architecture diagram showing the hybrid 
+        two-tiered pipeline with deterministic simulation and LLM narrative generation.
+        """
+        print("Creating system architecture diagram...")
+        
+        # Create figure with specific size for publication quality
+        fig, ax = plt.subplots(figsize=(16, 14))  # Increased height to accommodate principles below
+        ax.set_xlim(0, 100)
+        ax.set_ylim(0, 100)
+        ax.axis('off')
+        
+        # Define colors
+        colors = {
+            'simulation': '#E8F4FD',  # Light blue
+            'bt': '#FFE6E6',          # Light red
+            'narrative': '#E8F8E8',   # Light green
+            'frontend': '#FFF4E6',    # Light orange
+            'data': '#F0E6FF',        # Light purple
+            'connection': '#666666'    # Gray for arrows
+        }
+        
+        # Title
+        ax.text(50, 95, 'Hybrid Agent Town Simulation Architecture', 
+                fontsize=20, fontweight='bold', ha='center')
+        ax.text(50, 91, 'Two-Tiered Pipeline: Deterministic Simulation + LLM Narrative Generation', 
+                fontsize=14, ha='center', style='italic')
+        
+        # TIER 1: DETERMINISTIC SIMULATION CORE
+        simulation_box = FancyBboxPatch(
+            (5, 50), 40, 35,  
+            boxstyle="round,pad=2", 
+            facecolor=colors['simulation'], 
+            edgecolor='black', 
+            linewidth=2
+        )
+        ax.add_patch(simulation_box)
+        ax.text(25, 82, 'TIER 1: DETERMINISTIC SIMULATION CORE', 
+                fontsize=14, fontweight='bold', ha='center')
+        
+        # Agent Manager
+        manager_box = FancyBboxPatch(
+            (8, 72), 15, 8, 
+            boxstyle="round,pad=1", 
+            facecolor='white', 
+            edgecolor='black'
+        )
+        ax.add_patch(manager_box)
+        ax.text(15.5, 76, 'Agent Manager', fontsize=10, fontweight='bold', ha='center')
+        ax.text(15.5, 73.5, '• Simulation Loop', fontsize=8, ha='center')
+        ax.text(15.5, 72, '• State Updates', fontsize=8, ha='center')
+        
+        # World State
+        world_box = FancyBboxPatch(
+            (26, 72), 15, 8, 
+            boxstyle="round,pad=1", 
+            facecolor='white', 
+            edgecolor='black'
+        )
+        ax.add_patch(world_box)
+        ax.text(33.5, 76, 'World State', fontsize=10, fontweight='bold', ha='center')
+        ax.text(33.5, 73.5, '• Environment', fontsize=8, ha='center')
+        ax.text(33.5, 72, '• Time & Schedule', fontsize=8, ha='center')
+        
+        # Behavior Trees Layer 
+        bt_box = FancyBboxPatch(
+            (8, 61), 34, 8, 
+            boxstyle="round,pad=1", 
+            facecolor=colors['bt'], 
+            edgecolor='black'
+        )
+        ax.add_patch(bt_box)
+        ax.text(25, 69, 'BEHAVIOR TREES (Agent Decision Making)',  
+                fontsize=11, fontweight='bold', ha='center')
+        
+        # Individual BT components 
+        agents = ['Alex', 'Bella', 'Charlie', 'Diana', 'Ethan', 'Fiona']
+        for i, agent in enumerate(agents):
+            x_pos = 10 + (i * 5.2)
+            agent_bt = FancyBboxPatch(
+                (x_pos, 62), 4, 6,  
+                boxstyle="round,pad=0.3", 
+                facecolor='white', 
+                edgecolor='darkred',
+                linewidth=1
+            )
+            ax.add_patch(agent_bt)
+            ax.text(x_pos + 2, 65.5, agent, fontsize=8, fontweight='bold', ha='center')  
+            ax.text(x_pos + 2, 63.5, 'BT', fontsize=7, ha='center')  
+            ax.text(x_pos + 2, 62.5, 'Nodes', fontsize=7, ha='center')  
+        
+        # Pathfinding
+        pathfinding_box = FancyBboxPatch(
+            (8, 52), 15, 6, 
+            boxstyle="round,pad=1", 
+            facecolor='white', 
+            edgecolor='black'
+        )
+        ax.add_patch(pathfinding_box)
+        ax.text(15.5, 55.5, 'Pathfinding (BFS)', fontsize=9, fontweight='bold', ha='center')
+        ax.text(15.5, 53.5, 'Movement Logic', fontsize=8, ha='center')
+        
+        # Memory Streams
+        memory_box = FancyBboxPatch(
+            (26, 52), 15, 6, 
+            boxstyle="round,pad=1", 
+            facecolor=colors['data'], 
+            edgecolor='black'
+        )
+        ax.add_patch(memory_box)
+        ax.text(33.5, 55.5, 'Agent Memory', fontsize=9, fontweight='bold', ha='center')
+        ax.text(33.5, 53.5, 'Event Logs', fontsize=8, ha='center')
+        
+        # TIER 2: NARRATIVE GENERATION SYSTEM
+        narrative_box = FancyBboxPatch(
+            (55, 50), 40, 35,  
+            boxstyle="round,pad=2", 
+            facecolor=colors['narrative'], 
+            edgecolor='black', 
+            linewidth=2
+        )
+        ax.add_patch(narrative_box)
+        ax.text(75, 82, 'TIER 2: LLM NARRATIVE GENERATION', 
+                fontsize=14, fontweight='bold', ha='center')
+        
+        # Narrative System
+        narrative_sys_box = FancyBboxPatch(
+            (58, 72), 15, 8, 
+            boxstyle="round,pad=1", 
+            facecolor='white', 
+            edgecolor='black'
+        )
+        ax.add_patch(narrative_sys_box)
+        ax.text(65.5, 76, 'Narrative System', fontsize=10, fontweight='bold', ha='center')
+        ax.text(65.5, 73.5, '• Post-hoc Process', fontsize=8, ha='center')
+        ax.text(65.5, 72, '• Daily Generation', fontsize=8, ha='center')
+        
+        # LLM Handler
+        llm_box = FancyBboxPatch(
+            (76, 72), 15, 8, 
+            boxstyle="round,pad=1", 
+            facecolor='white', 
+            edgecolor='black'
+        )
+        ax.add_patch(llm_box)
+        ax.text(83.5, 76, 'LLM Handler', fontsize=10, fontweight='bold', ha='center')
+        ax.text(83.5, 73.5, '• GPT-4 Integration', fontsize=8, ha='center')
+        ax.text(83.5, 72, '• Prompt Management', fontsize=8, ha='center')
+        
+        # Diary Generation
+        diary_box = FancyBboxPatch(
+            (58, 62), 15, 8, 
+            boxstyle="round,pad=1", 
+            facecolor='white', 
+            edgecolor='darkgreen'
+        )
+        ax.add_patch(diary_box)
+        ax.text(65.5, 66.5, 'Agent Diaries', fontsize=10, fontweight='bold', ha='center')
+        ax.text(65.5, 64.5, 'Individual Stories', fontsize=8, ha='center')
+        ax.text(65.5, 63, 'First-Person', fontsize=8, ha='center')
+        
+        # Story Compilation
+        story_box = FancyBboxPatch(
+            (76, 62), 15, 8, 
+            boxstyle="round,pad=1", 
+            facecolor='white', 
+            edgecolor='darkgreen'
+        )
+        ax.add_patch(story_box)
+        ax.text(83.5, 66.5, 'Town Stories', fontsize=10, fontweight='bold', ha='center')
+        ax.text(83.5, 64.5, 'Compiled Stories', fontsize=8, ha='center')
+        ax.text(83.5, 63, 'Third-Person', fontsize=8, ha='center')
+        
+        # Data Storage
+        storage_box = FancyBboxPatch(
+            (67, 52), 15, 6, 
+            boxstyle="round,pad=1", 
+            facecolor=colors['data'], 
+            edgecolor='black'
+        )
+        ax.add_patch(storage_box)
+        ax.text(74.5, 55.5, 'Story Storage', fontsize=9, fontweight='bold', ha='center')
+        ax.text(74.5, 53.5, 'Daily Stories/', fontsize=8, ha='center')
+        
+        
+        frontend_box = FancyBboxPatch(
+            (5, 32), 90, 12,  
+            boxstyle="round,pad=2", 
+            facecolor=colors['frontend'], 
+            edgecolor='black', 
+            linewidth=2
+        )
+        ax.add_patch(frontend_box)
+        ax.text(50, 44, 'FRONTEND: WEB VISUALIZATION & CONTROL', 
+                fontsize=14, fontweight='bold', ha='center')
+        
+        # Frontend components - ADJUSTED POSITIONS
+        frontend_components = [
+            ('Flask Server', 12, '• SocketIO\n• API Routes'),
+            ('Real-time Map', 30, '• Agent Positions\n• Interactions'),
+            ('Agent Inspector', 48, '• Needs & Goals\n• Personal Logs'),
+            ('Story Panel', 66, '• Daily Stories\n• Town Events'),
+            ('Analysis Tools', 84, '• Narrative Analysis\n• Visualizations')
+        ]
+        
+        for name, x_pos, details in frontend_components:
+            component_box = FancyBboxPatch(
+                (x_pos - 6, 34), 12, 8, 
+                boxstyle="round,pad=0.5", 
+                facecolor='white', 
+                edgecolor='darkorange'
+            )
+            ax.add_patch(component_box)
+            ax.text(x_pos, 39, name, fontsize=9, fontweight='bold', ha='center')
+            ax.text(x_pos, 36, details, fontsize=7, ha='center')
+        
+        # ANALYSIS LAYER
+        analysis_box = FancyBboxPatch(
+            (5, 15), 90, 12,  
+            boxstyle="round,pad=2", 
+            facecolor='#F5F5F5', 
+            edgecolor='black', 
+            linewidth=2
+        )
+        ax.add_patch(analysis_box)
+        ax.text(50, 24, 'NARRATIVE ANALYSIS & VALIDATION', 
+                fontsize=14, fontweight='bold', ha='center')
+        
+        # Analysis components
+        analysis_components = [
+            ('Similarity\nAnalysis', 15, 'TF-IDF\nCosine Sim'),
+            ('Sentiment\nTracking', 30, 'TextBlob\nPolarity'),
+            ('Behavioral\nPatterns', 45, 'Keywords\nConsistency'),
+            ('Social\nNetworks', 60, 'Interaction\nGraphs'),
+            ('Architecture\nDiagram', 75, 'System\nVisualization'),
+            ('Reports', 90, 'Statistical\nSummaries')
+        ]
+        
+        for name, x_pos, details in analysis_components:
+            component_box = FancyBboxPatch(
+                (x_pos - 6, 17), 12, 6,  # Adjusted from (x_pos - 6, 7), 12, 8
+                boxstyle="round,pad=0.5", 
+                facecolor='white', 
+                edgecolor='purple'
+            )
+            ax.add_patch(component_box)
+            ax.text(x_pos, 20.5, name, fontsize=8, fontweight='bold', ha='center')
+            ax.text(x_pos, 18, details, fontsize=7, ha='center')
+        
+        # ARROWS AND CONNECTIONS - ADJUSTED FOR NEW POSITIONS
+        
+        # Memory to Narrative (main data flow)
+        ax.annotate('', xy=(58, 69), xytext=(41, 55),  # Adjusted positions
+                   arrowprops=dict(arrowstyle='->', lw=3, color=colors['connection']))
+        ax.text(49, 62, 'Memory\nLogs', fontsize=9, ha='center', 
+                bbox=dict(boxstyle="round,pad=0.3", facecolor='white', alpha=0.8))
+        
+        # Simulation to Frontend
+        ax.annotate('', xy=(25, 44), xytext=(25, 50),  # Adjusted positions
+                   arrowprops=dict(arrowstyle='->', lw=2, color=colors['connection']))
+        
+        # Narrative to Frontend
+        ax.annotate('', xy=(75, 44), xytext=(75, 50),  # Adjusted positions
+                   arrowprops=dict(arrowstyle='->', lw=2, color=colors['connection']))
+        
+        # Frontend to Analysis
+        ax.annotate('', xy=(50, 27), xytext=(50, 32),  # Adjusted positions
+                   arrowprops=dict(arrowstyle='->', lw=2, color=colors['connection']))
+        
+        # Internal simulation connections
+        ax.annotate('', xy=(24.5, 70), xytext=(24.5, 72),  # Adjusted positions
+                   arrowprops=dict(arrowstyle='->', lw=1.5, color='darkblue'))
+        
+        # BT to Memory - ADJUSTED FOR NEW BT POSITION
+        ax.annotate('', xy=(33, 58), xytext=(25, 61),  # Adjusted positions for smaller BT
+                   arrowprops=dict(arrowstyle='->', lw=1.5, color='darkred'))
+        
+        plt.tight_layout()
+        plt.savefig(
+            os.path.join(self.config.results_dir, 'architecture_diagram.png'), 
+            dpi=300, 
+            bbox_inches='tight',
+            facecolor='white'
+        )
+        plt.close()
+        
+        print(f"Architecture diagram saved to: {os.path.join(self.config.results_dir, 'architecture_diagram.png')}")
+       
+    
     def generate_comprehensive_report(self) -> List[str]:
         """
         Generate a comprehensive text report summarizing all analyses.
@@ -1040,6 +1333,10 @@ class NarrativeAnalyzer:
             connection_results = self.analyze_agent_connections()
             print("✓ Agent connection analysis complete")
             
+            # Generate architecture diagram
+            self.create_architecture_diagram()
+            print("✓ System architecture diagram generated")
+            
             # Generate comprehensive report
             report_lines = self.generate_comprehensive_report()
             print("✓ Comprehensive report generated")
@@ -1053,6 +1350,7 @@ class NarrativeAnalyzer:
             print("• sentiment_behavior_analysis.csv & plots")
             print("• routine_analysis.csv & patterns")
             print("• agent_interaction_matrix.csv & network graph")
+            print("• architecture_diagram.png (NEW!)")
             print("• comprehensive_report.txt")
             print("=" * 60)
             

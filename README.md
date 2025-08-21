@@ -1,4 +1,5 @@
 # Generative Agent Town Simulation
+# Author: Erfan Rafieioskouei
 
 ## Abstract
 

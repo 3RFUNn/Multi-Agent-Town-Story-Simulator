@@ -149,7 +149,7 @@ Agent properties and state are defined in `simulation/entities.py` and configure
 
 The moment-to-moment decision-making of each agent is governed by a Behavior Tree, implemented primarily in `behavior/behavior_tree.py` and `behavior/agent_behaviors.py`.
 
-The BT is composed of several custom behavior nodes, such as HasItem, NoItem, QueryRAG, FollowPath, and ExploreAction, all of which inherit from py_trees.behaviour.Behaviour. These nodes represent the atomic actions that an agent can perform. For example, FollowPath is responsible for moving an agent along a predefined route, while PickUpItem handles the logical state change of an agent acquiring an item.
+The BT is composed of several custom behavior nodes, such as QueryRAG, FollowPath, and ExploreAction, all of which inherit from py_trees.behaviour.Behaviour. These nodes represent the atomic actions that an agent can perform. For example, FollowPath is responsible for moving an agent along a predefined route, while PickUpItem handles the logical state change of an agent acquiring an item.
 
 The tree structure itself is managed by composite nodes. The top-level root node is a Selector, which prioritizes sequences of actions based on the agent's current state. For instance, it may prioritize a Deliver sequence if the agent possesses an item or a PickUp sequence if it does not.
 

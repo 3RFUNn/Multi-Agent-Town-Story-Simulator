@@ -1,4 +1,4 @@
-# Generative Agent Town Simulation
+# Multi-Agent Town Story Simulator
 # Author: Erfan Rafieioskouei
 
 ## Abstract

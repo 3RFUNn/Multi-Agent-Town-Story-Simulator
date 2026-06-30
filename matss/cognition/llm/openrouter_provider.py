@@ -32,6 +32,7 @@ import os
 import time
 from typing import Any, Dict, List, Optional, Sequence
 
+from ...config.env import resolve_api_key
 from ...ports import LLMRequest, LLMResponse, ModelTier
 from . import structured
 
@@ -84,7 +85,9 @@ class OpenRouterProvider:
             title: Optional ``X-Title`` header (OpenRouter app ranking).
             extra_headers: Any additional headers to send.
         """
-        self.api_key = api_key or os.environ.get("OPENROUTER_API_KEY")
+        # Reads OPENROUTER_API_KEY (preferred) or the generic API_KEY from the
+        # environment or a .env file, so credentials live in .env, never in code.
+        self.api_key = resolve_api_key(api_key, ["OPENROUTER_API_KEY", "API_KEY"])
         self.default_model = model
         self.models: Dict[str, str] = dict(models or {})
         self.reasoning = bool(reasoning)

@@ -420,7 +420,10 @@ def test_openai_provider_constructs_and_is_lazy():
 
 
 def test_openai_provider_missing_key_raises_without_network(monkeypatch):
+    # Clear the specific var AND the generic API_KEY fallback so resolution finds
+    # nothing and fails fast with RuntimeError (before any import/network).
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("API_KEY", raising=False)
     provider = OpenAIEmbeddingProvider(api_key=None)
     with pytest.raises(RuntimeError):
         provider.embed("hello")

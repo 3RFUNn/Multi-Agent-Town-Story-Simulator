@@ -584,21 +584,22 @@ def test_llm_package_imports_without_requests():
 
 
 def test_real_adapters_require_key_to_call():
-    # No key -> calling complete raises before any network access.
+    # No key -> calling complete raises before any network access. Clear every
+    # candidate var (incl. the generic API_KEY fallback) so the test is hermetic.
     import os
 
-    saved_openai = os.environ.pop("OPENAI_API_KEY", None)
-    saved_anthropic = os.environ.pop("ANTHROPIC_API_KEY", None)
+    cleared = {name: os.environ.pop(name, None)
+               for name in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY",
+                            "OPENROUTER_API_KEY", "API_KEY")}
     try:
         with pytest.raises(RuntimeError):
             OpenAIProvider().complete(LLMRequest(prompt="x"))
         with pytest.raises(RuntimeError):
             AnthropicProvider().complete(LLMRequest(prompt="x"))
     finally:
-        if saved_openai is not None:
-            os.environ["OPENAI_API_KEY"] = saved_openai
-        if saved_anthropic is not None:
-            os.environ["ANTHROPIC_API_KEY"] = saved_anthropic
+        for name, value in cleared.items():
+            if value is not None:
+                os.environ[name] = value
 
 
 # ---------------------------------------------------------------------------

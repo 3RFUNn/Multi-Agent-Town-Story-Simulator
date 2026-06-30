@@ -14,6 +14,7 @@ import os
 import time
 from typing import Any, Dict, List, Optional, Sequence
 
+from ...config.env import resolve_api_key
 from ...ports import LLMRequest, LLMResponse, ModelTier
 from . import structured
 
@@ -54,7 +55,7 @@ class OpenAIProvider:
             base_url: Chat-completions endpoint URL.
             timeout: Per-request timeout in seconds.
         """
-        self.api_key = api_key or os.environ.get("OPENAI_API_KEY")
+        self.api_key = resolve_api_key(api_key, ["OPENAI_API_KEY", "API_KEY"])
         self.models: Dict[str, str] = {**DEFAULT_MODELS, **(models or {})}
         self.base_url = base_url
         self.timeout = float(timeout)

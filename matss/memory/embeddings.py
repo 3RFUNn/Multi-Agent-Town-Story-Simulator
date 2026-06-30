@@ -130,11 +130,12 @@ class OpenAIEmbeddingProvider:
         self._timeout = timeout
 
     def _resolve_key(self) -> str:
-        key = self._api_key or os.environ.get("OPENAI_API_KEY")
+        from ..config.env import resolve_api_key
+        key = resolve_api_key(self._api_key, ["OPENAI_API_KEY", "API_KEY"])
         if not key:
             raise RuntimeError(
-                "OpenAIEmbeddingProvider requires an api_key or the "
-                "OPENAI_API_KEY environment variable to be set."
+                "OpenAIEmbeddingProvider requires an api_key, or OPENAI_API_KEY / "
+                "API_KEY set in the environment or a .env file."
             )
         return key
 

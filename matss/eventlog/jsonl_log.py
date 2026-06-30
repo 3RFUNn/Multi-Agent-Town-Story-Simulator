@@ -41,11 +41,20 @@ class JsonlEventLog:
             open(self._path, "a", encoding="utf-8").close()
 
     def _line_count(self) -> int:
+        # Count only lines that parse as complete JSON objects, so a partial or
+        # corrupt trailing record never inflates the next assigned sequence
+        # number (which would violate the dense/monotonic seq invariant).
         count = 0
         with open(self._path, "r", encoding="utf-8") as fh:
             for line in fh:
-                if line.strip():
-                    count += 1
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    json.loads(line)
+                except (ValueError, TypeError):
+                    continue
+                count += 1
         return count
 
     def append(self, event: Event) -> Event:
@@ -86,22 +95,36 @@ class JsonlEventLog:
             fh.flush()
         return stamped
 
-    def read(self, from_seq: int = 0) -> Iterator[Event]:
+    def read(self, from_seq: int = 0, *, strict: bool = False) -> Iterator[Event]:
         """Parse stored lines into events with ``seq >= from_seq``, in order.
+
+        Malformed or incomplete lines (e.g. a truncated trailing record from a
+        crash mid-write) are **skipped** by default so that one bad line cannot
+        make an otherwise-valid log unreplayable. Pass ``strict=True`` to raise a
+        :class:`ValueError` naming the offending line instead.
 
         Args:
             from_seq: Inclusive lower bound on sequence number. Defaults to 0.
+            strict: When ``True``, raise on the first malformed line rather than
+                skipping it.
 
         Yields:
             Reconstructed :class:`Event` objects in file order whose sequence
             number is at least ``from_seq``.
         """
         with open(self._path, "r", encoding="utf-8") as fh:
-            for line in fh:
+            for lineno, line in enumerate(fh, start=1):
                 line = line.strip()
                 if not line:
                     continue
-                event = Event.from_dict(json.loads(line))
+                try:
+                    event = Event.from_dict(json.loads(line))
+                except (ValueError, TypeError, KeyError) as exc:
+                    if strict:
+                        raise ValueError(
+                            f"{self._path}:{lineno}: malformed event line: {exc}"
+                        ) from exc
+                    continue
                 if event.seq >= from_seq:
                     yield event
 

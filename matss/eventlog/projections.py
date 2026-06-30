@@ -132,9 +132,14 @@ class LiveWorldReadModel:
                 self._agent(event.agent_id)["current_activity"] = payload.get(
                     "activity"
                 )
-        elif etype == EventType.MONEY_CHANGED:
+        elif etype in (EventType.MONEY_CHANGED, EventType.WORKED):
+            # Both events carry the post-change balance under "balance"; WORKED is
+            # wage income, MONEY_CHANGED is spend. (Fall back to "money" for
+            # hand-authored events.)
             if event.agent_id is not None:
-                self._agent(event.agent_id)["money"] = payload.get("money")
+                balance = payload.get("balance", payload.get("money"))
+                if balance is not None:
+                    self._agent(event.agent_id)["money"] = balance
         elif etype == EventType.INTERACTION_STARTED:
             if event.agent_id is not None:
                 self._agent(event.agent_id)["interacting_with"] = payload.get(

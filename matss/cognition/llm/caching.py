@@ -5,10 +5,13 @@ persona + world preamble, the same reflexive question). Caching deduplicates
 them, which is both a cost lever and — because the mock provider is deterministic
 — a way to make repeated runs cheaper without changing results.
 
-The cache key is the tuple ``(cache_prefix, system, prompt, schema-json)``: two
-requests that would produce the same completion share an entry. On a hit the
-stored response is returned with ``cached=True`` and the inner provider is *not*
-called.
+The cache key includes **every output-affecting field** of the request —
+``(cache_prefix, system, prompt, schema-json, tier, max_tokens, stop,
+temperature)`` — so two requests share an entry only if they would genuinely
+produce the same completion. Omitting the tier/sampling fields would let a cheap
+request's response be served for a frontier request with the same prompt (and
+vice versa), silently defeating tiered routing. On a hit the stored response is
+returned with ``cached=True`` and the inner provider is *not* called.
 """
 
 from __future__ import annotations
@@ -20,11 +23,18 @@ from dataclasses import replace
 
 from ...ports import LLMProvider, LLMRequest, LLMResponse
 
-_CacheKey = Tuple[str, str, str, str]
+# (cache_prefix, system, prompt, schema_json, tier, max_tokens, stop, temperature)
+_CacheKey = Tuple[str, str, str, str, str, int, Tuple[str, ...], float]
 
 
 def _key_for(request: LLMRequest) -> _CacheKey:
-    """Build the canonical cache key for ``request``."""
+    """Build the canonical cache key for ``request``.
+
+    Includes the tier and sampling parameters because they change the provider's
+    output (the mock mixes ``tier``/``max_tokens`` into its digest, and real
+    adapters map ``tier`` to different models). Keying on the prompt alone would
+    serve the wrong model's response across tiers.
+    """
     schema_json = ""
     if request.response_schema is not None:
         schema_json = json.dumps(request.response_schema, sort_keys=True)
@@ -33,6 +43,10 @@ def _key_for(request: LLMRequest) -> _CacheKey:
         request.system or "",
         request.prompt,
         schema_json,
+        request.tier,
+        int(request.max_tokens),
+        tuple(request.stop or ()),
+        float(request.temperature),
     )
 
 

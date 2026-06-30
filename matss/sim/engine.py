@@ -80,6 +80,14 @@ class SimulationEngine:
         start_time = tuple(self.params.get("start_time", [8, 0]))
         self.minutes_per_tick = int(self.params.get("minutes_per_tick", 2))
         self.narrative_hour = int(self.params.get("narrative_hour", 3))
+        # After this many consecutive ticks of zero movement progress while
+        # MOVING, an agent abandons its path and re-decides. This deterministically
+        # breaks head-on swaps and standoffs that would otherwise freeze a pair of
+        # agents forever (two agents each targeting the other's current cell).
+        self._max_blocked = int(self.params.get("max_blocked_ticks", 8))
+        # Per-agent consecutive no-progress counter (engine-side; not hashed —
+        # but updated fully deterministically, so trajectories stay reproducible).
+        self._stuck: Dict[str, int] = {}
 
         self.world = self._init_world(start_time)
         self._trees: Dict[str, Node] = {
@@ -331,22 +339,20 @@ class SimulationEngine:
         return self.rng.stream(f"move:{agent.id}").choice(available)
 
     def _resolve_movement(self, agent: Agent, claimed: set) -> None:
+        start_pos = agent.pos
+
         if not agent.path or agent.path_index >= len(agent.path):
             target = self._resolve_target(agent, claimed)
             if target is None:
-                agent.state = AgentState.IDLE
-                self._trees[agent.id].reset()
-                if agent.destination_name:
-                    self._observe(agent, f"I can't go to {agent.destination_name}, there's no space.")
+                self._give_up_moving(agent, f"I can't go to {agent.destination_name}, there's no space."
+                                      if agent.destination_name else None)
                 return
             claimed.add(target)
             others = frozenset(self.world.occupied_positions(exclude=agent.id))
             path = self.planner.plan(agent.pos, target, blocked=others)
             if not path:
-                agent.state = AgentState.IDLE
-                self._trees[agent.id].reset()
-                self._observe(agent, f"I can't find a path to {agent.destination_name}.")
                 claimed.discard(target)
+                self._give_up_moving(agent, f"I can't find a path to {agent.destination_name}.")
                 return
             agent.path = path
             agent.path_index = 1  # path[0] is the current cell
@@ -364,7 +370,7 @@ class SimulationEngine:
                     agent.path_index = 2
                     self._record(self._mk_event(EventType.AGENT_MOVED, agent_id=agent.id,
                                                 payload={"to": [agent.x, agent.y]}))
-                # else: wait this tick.
+                # else: wait this tick (progress tracked below).
             else:
                 agent.x, agent.y = next_pos
                 agent.path_index += 1
@@ -373,7 +379,29 @@ class SimulationEngine:
 
             if agent.path_index >= len(agent.path):
                 agent.path = []
+                self._stuck[agent.id] = 0
                 self._on_arrival(agent)
+                return
+
+        # Liveness: detect a stalled mover (head-on swap / standoff) and recover.
+        if agent.state == AgentState.MOVING:
+            if agent.pos == start_pos:
+                self._stuck[agent.id] = self._stuck.get(agent.id, 0) + 1
+                if self._stuck[agent.id] >= self._max_blocked:
+                    self._give_up_moving(
+                        agent, "I keep getting blocked here — I'll try a different approach.")
+            else:
+                self._stuck[agent.id] = 0
+
+    def _give_up_moving(self, agent: Agent, observation: Optional[str] = None) -> None:
+        """Abandon the current movement and return to IDLE so the agent re-decides."""
+        agent.path = []
+        agent.path_index = 0
+        agent.state = AgentState.IDLE
+        self._stuck[agent.id] = 0
+        self._trees[agent.id].reset()
+        if observation:
+            self._observe(agent, observation)
 
     def _on_arrival(self, agent: Agent) -> None:
         if agent.interacting_with:

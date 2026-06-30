@@ -144,12 +144,17 @@ class OpenAIEmbeddingProvider:
         return self._ENDPOINT
 
     def _post(self, inputs: List[str]) -> List[List[float]]:
+        # Validate configuration BEFORE importing the optional `requests`
+        # dependency, so a missing key fails fast with a clear RuntimeError
+        # regardless of whether the `[llm]` extra is installed (and so the core
+        # test suite passes without `requests`, matching the LLM adapters).
+        key = self._resolve_key()
         import requests  # lazy import: no network/dependency at module import
 
         response = requests.post(
             self._endpoint(),
             headers={
-                "Authorization": f"Bearer {self._resolve_key()}",
+                "Authorization": f"Bearer {key}",
                 "Content-Type": "application/json",
             },
             json={"model": self.model, "input": inputs, "dimensions": self.dim},

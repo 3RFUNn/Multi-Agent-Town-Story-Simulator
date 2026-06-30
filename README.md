@@ -5,6 +5,32 @@
 
 This project presents a hybrid architectural approach for emergent narrative generation in multi-agent simulations. It integrates deterministic agent control via Behavior Trees (BTs) with creative, post-hoc narrative generation using a Large Language Model (LLM). Agents are controlled by BTs for logical, predictable actions, while the LLM observes agent logs and generates human-readable stories and diaries. The system resolves the classic conflict between authorial control and AI autonomy by decoupling agent behavior from narrative generation, offering a scalable and robust solution for games, research, and interactive storytelling.
 
+---
+
+## 🚀 v2 — Industry-Scale Engine (`matss/`)
+
+A ground-up, industry-grade rebuild now lives in the **`matss/`** package, implemented directly from
+[`PROJECT_SCALING_AND_RESEARCH_STRATEGY.md`](./PROJECT_SCALING_AND_RESEARCH_STRATEGY.md). See
+[`ARCHITECTURE.md`](./ARCHITECTURE.md) for the full design. Highlights:
+
+- **Bit-reproducible** simulation — every run is deterministic from `seed + content` and produces an identical per-tick `state_hash` chain (the prototype seeded *no* RNG; v2 makes this a tested, CI-gated property).
+- **Event-sourced** — an append-only log is the canonical source of truth; runs **replay** exactly and the LLM narrator simply sifts the event stream.
+- **Hexagonal (ports & adapters)** — the stdlib-only core runs fully offline with mock LLM/in-memory adapters, while Anthropic/OpenAI, JSONL/Kafka, and pgvector/Qdrant plug in unchanged.
+- **Park-style memory** (recency·importance·relevance + reflection), **A\*/flow-field** pathfinding, a **provider-agnostic LLM stack** (router/cache/batch/retry/structured outputs), a **bounded cognition queue**, **hierarchical narration** with a cost model, and **LLM-as-judge** evaluation.
+- **240+ tests** pass (`python -m pytest`), including a determinism gate and event-log replay equality.
+
+```bash
+pip install -e ".[dev]"                                   # stdlib core; dev = pytest
+python -m pytest -q                                       # run the full test suite
+python -m matss.app.runner --seed 42 --days 2             # deterministic offline run (mock LLM)
+python -m matss.app.runner --seed 123 --ticks 500 --jsonl run.jsonl
+python -m matss.app.replay  --jsonl run.jsonl --verify-seed 123   # reproducibility certificate
+```
+
+The original prototype documented below remains for reference.
+
+---
+
 ## Table of Contents
 | Section | Link |
 |---------|------|

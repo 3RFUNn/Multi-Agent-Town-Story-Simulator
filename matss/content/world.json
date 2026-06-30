@@ -2447,6 +2447,7 @@
       "classes": 0.3,
       "default": 0.5
     },
-    "narrative_hour": 3
+    "narrative_hour": 3,
+    "max_blocked_ticks": 8
   }
 }

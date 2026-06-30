@@ -17,6 +17,7 @@ import argparse
 import sys
 from typing import List, Optional
 
+from ..cognition.llm import build_provider
 from ..domain.enums import EventType
 from ..eventlog import InMemoryEventLog, InProcessEventBus, JsonlEventLog
 from ..observability import configure_logging
@@ -30,13 +31,18 @@ def _count(log, event_type: str) -> int:
 
 def run(seed: int = 42, ticks: Optional[int] = None, days: Optional[int] = None,
         jsonl: Optional[str] = None, hierarchical: bool = False,
-        web: bool = False, verbose: bool = False) -> int:
+        web: bool = False, verbose: bool = False,
+        provider: str = "mock", model: Optional[str] = None) -> int:
     configure_logging()
     bus = InProcessEventBus()
     log = JsonlEventLog(jsonl) if jsonl else InMemoryEventLog()
 
+    # Default provider is the deterministic mock (offline, reproducible). A real
+    # provider (e.g. openrouter -> Google Gemma) only affects Tier-2 narrative
+    # text; the Tier-1 state_hash chain stays bit-reproducible regardless.
+    llm = build_provider(provider, model=model)
     engine = build_engine(seed=seed, event_log=log, event_bus=bus,
-                          hierarchical_narrative=hierarchical)
+                          llm_provider=llm, hierarchical_narrative=hierarchical)
 
     bus.subscribe(ConsoleSink(verbose=verbose).handle)
 
@@ -65,6 +71,7 @@ def run(seed: int = 42, ticks: Optional[int] = None, days: Optional[int] = None,
     print("MATSS v2 — headless run complete")
     print("=" * 64)
     print(f"seed:               {seed}")
+    print(f"llm provider:       {provider}" + (f" ({model})" if model else ""))
     print(f"ticks:              {engine.world.tick}")
     print(f"sim time:           day {engine.world.day_index} ({engine.world.day_of_week}) "
           f"{engine.world.time[0]:02d}:{engine.world.time[1]:02d}")
@@ -93,12 +100,19 @@ def main(argv: Optional[List[str]] = None) -> int:
     p.add_argument("--jsonl", type=str, help="persist the event log to this JSONL path")
     p.add_argument("--hierarchical", action="store_true", help="agent->group->town narration")
     p.add_argument("--web", action="store_true", help="serve the web gateway (needs .[web])")
+    p.add_argument("--provider", type=str, default="mock",
+                   choices=["mock", "openrouter", "openai", "anthropic"],
+                   help="Tier-2 narrative LLM provider (default: mock, deterministic/offline)")
+    p.add_argument("--model", type=str, default=None,
+                   help="model id override for the real provider "
+                        "(e.g. google/gemma-4-26b-a4b-it:free)")
     p.add_argument("--verbose", action="store_true")
     args = p.parse_args(argv)
     if args.ticks is None and args.days is None:
         args.days = 2
     return run(seed=args.seed, ticks=args.ticks, days=args.days, jsonl=args.jsonl,
-               hierarchical=args.hierarchical, web=args.web, verbose=args.verbose)
+               hierarchical=args.hierarchical, web=args.web, verbose=args.verbose,
+               provider=args.provider, model=args.model)
 
 
 if __name__ == "__main__":

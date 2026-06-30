@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "matss"
+version = "2.0.0"
+description = "Multi-Agent Town Story Simulator — a deterministic, event-sourced generative-agent engine with a decoupled LLM narrative layer."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "Erfan Rafieioskouei" },
+]
+# The CORE engine (matss.*) is intentionally stdlib-only: it must run and pass
+# its full test suite with ZERO third-party dependencies. Optional extras below
+# enable production adapters (real web gateway, real LLM/embedding providers).
+dependencies = []
+
+[project.optional-dependencies]
+# Web gateway (Flask/SocketIO real-time transport adapter).
+web = ["flask>=3.0", "flask-socketio>=5.3", "python-socketio>=5.11"]
+# Real LLM / embedding provider adapters (offline mock needs none of these).
+llm = ["requests>=2.31"]
+# Offline analytics toolkit (the legacy narrative_analyzer.py).
+analysis = ["pandas", "scikit-learn", "textblob", "networkx", "matplotlib", "seaborn", "numpy"]
+# Test + dev tooling.
+dev = ["pytest>=7.4", "pytest-cov>=4.1"]
+
+[project.scripts]
+matss-run = "matss.app.runner:main"
+matss-replay = "matss.app.replay:main"
+
+[tool.setuptools.packages.find]
+include = ["matss*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-q --strict-markers"
+markers = [
+    "integration: end-to-end tests that compose multiple subsystems",
+    "slow: longer-running tests",
+]

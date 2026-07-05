@@ -1,0 +1,18 @@
+#version: 1.0
+Two residents of a small town just had a conversation. Write the short dialogue that plausibly took place.
+
+{{ a_name }} — personality: {{ a_personality }}; mood: {{ a_mood }}.
+{{ b_name }} — personality: {{ b_personality }}; mood: {{ b_mood }}.
+Their relationship: {{ relationship }} (affinity {{ affinity }}/100).
+Where: {{ location }}. When: {{ weekday }} around {{ time_label }}.
+Conversation tone: {{ tone }}.
+
+Recent context for {{ a_name }}:
+{% for line in a_context %}
+- {{ line }}
+{% endfor %}
+
+Write 6-10 alternating lines of natural spoken dialogue, formatted as:
+{{ a_name }}: ...
+{{ b_name }}: ...
+No narration, no stage directions, no quotation marks.

@@ -1,0 +1,21 @@
+# townsim default configuration.
+# Copy to <project root>/townsim.yaml to customize; any key can also be set via
+# environment variables: TOWNSIM_KERNEL__SEED=7, TOWNSIM_LLM__PROVIDER=fake, ...
+kernel:
+  seed: 42
+  tick_minutes: 2
+  ticks_per_second: 2.5
+  day_start_hour: 8
+
+llm:
+  provider: auto        # auto -> openai if OPENAI_API_KEY (or legacy API_KEY) is set, else fake
+  model: gpt-4.1-mini
+
+needs:
+  hunger_critical: 85
+  fatigue_tired: 70
+  fatigue_exhausted: 95
+
+server:
+  host: 127.0.0.1
+  port: 8000

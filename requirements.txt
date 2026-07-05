@@ -1,0 +1,18 @@
+# Multi-Agent Town Story Simulator — V2 runtime dependencies
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pydantic>=2.6
+pydantic-settings>=2.2
+PyYAML>=6.0
+jinja2>=3.1
+numpy>=1.26
+structlog>=24.1
+tenacity>=8.2
+openai>=1.30
+
+# Legacy V1 runtime (app.py / command.py)
+flask>=3.0
+flask-socketio>=5.3
+python-socketio[client]>=5.11
+python-dotenv>=1.0
+requests>=2.31

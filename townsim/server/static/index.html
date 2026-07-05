@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Town Simulator V2</title>
+  <!-- Relative path works when the static dir is mounted at "/" (html=True);
+       the onerror fallback covers a "/static" mount with index served at "/". -->
+  <link rel="stylesheet" href="./style.css" onerror="this.href='./static/style.css'">
+</head>
+<body>
+  <header id="topbar">
+    <h1 id="app-title">Town Simulator V2</h1>
+    <div id="clock" class="clock">--</div>
+    <div id="conn" class="conn">
+      <span id="conn-dot" class="dot"></span>
+      <span id="conn-text">connecting&hellip;</span>
+    </div>
+    <button id="pause-btn" type="button" disabled>Pause</button>
+    <span id="seed" class="seed" hidden></span>
+  </header>
+
+  <main id="main">
+    <section id="left-col">
+      <section id="map-panel" class="panel">
+        <h2>Town Map</h2>
+        <div id="map-viewport">
+          <div id="map-grid" role="application" aria-label="Town map"></div>
+        </div>
+      </section>
+
+      <section id="stories-panel" class="panel">
+        <h2>Daily Stories</h2>
+        <div id="stories" class="panel-body">
+          <p id="stories-empty" class="hint">No stories yet. They appear at the end of each simulated day.</p>
+        </div>
+      </section>
+    </section>
+
+    <aside id="sidebar">
+      <section id="roster-panel" class="panel">
+        <h2>Residents</h2>
+        <div id="roster" class="panel-body"></div>
+      </section>
+
+      <section id="inspector-panel" class="panel">
+        <h2>Inspector</h2>
+        <div id="inspector" class="panel-body">
+
+          <div id="insp-empty">
+            <p class="hint">Click an agent or a building on the map.</p>
+          </div>
+
+          <div id="insp-place" hidden>
+            <p class="kicker">Place</p>
+            <p id="insp-place-name" class="place-name"></p>
+            <p class="row"><span class="lbl">Cells</span><span id="insp-place-cells" class="val"></span></p>
+          </div>
+
+          <div id="insp-agent" hidden>
+            <div class="insp-head">
+              <span id="insp-chip" class="chip static-chip"></span>
+              <div class="insp-head-text">
+                <p id="insp-name" class="insp-name"></p>
+                <p class="insp-sub">
+                  <span id="insp-mood" class="mood"></span>
+                  <span id="insp-state" class="badge"></span>
+                </p>
+              </div>
+            </div>
+
+            <p id="insp-goal" class="goal"></p>
+
+            <p class="row"><span class="lbl">Action</span><span id="insp-action" class="val"></span></p>
+            <p class="row"><span class="lbl">Money</span><span id="insp-money" class="val mono"></span></p>
+
+            <div class="needs">
+              <div class="need">
+                <span class="need-lbl">Hunger</span>
+                <span class="need-track"><span id="need-hunger-fill" class="need-fill"></span></span>
+                <span id="need-hunger-val" class="need-val mono">0</span>
+              </div>
+              <div class="need">
+                <span class="need-lbl">Social</span>
+                <span class="need-track"><span id="need-social-fill" class="need-fill"></span></span>
+                <span id="need-social-val" class="need-val mono">0</span>
+              </div>
+              <div class="need">
+                <span class="need-lbl">Fatigue</span>
+                <span class="need-track"><span id="need-fatigue-fill" class="need-fill"></span></span>
+                <span id="need-fatigue-val" class="need-val mono">0</span>
+              </div>
+            </div>
+
+            <div id="insp-personality" class="tags"></div>
+
+            <p class="bt-row"><span class="lbl">Behavior</span><span id="insp-bt" class="bt mono"></span></p>
+
+            <div class="insp-section">
+              <h3>Relationships</h3>
+              <ul id="insp-rel-list" class="rel-list"></ul>
+            </div>
+
+            <div id="insp-diary" class="insp-section" hidden>
+              <h3 id="insp-diary-title">Diary</h3>
+              <p id="insp-diary-text" class="diary-text"></p>
+              <button id="insp-diary-toggle" type="button" class="linkish" hidden>Show more</button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <section id="log-panel" class="panel">
+        <h2>
+          <span>Event Log</span>
+          <select id="log-filter" aria-label="Filter log by agent">
+            <option value="">All agents</option>
+          </select>
+        </h2>
+        <div id="log-list" class="panel-body" aria-live="polite"></div>
+      </section>
+    </aside>
+  </main>
+
+  <script src="./app.js" defer
+          onerror="var s=document.createElement('script');s.src='./static/app.js';s.defer=true;document.head.appendChild(s);"></script>
+</body>
+</html>

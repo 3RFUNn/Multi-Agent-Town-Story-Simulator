@@ -6,17 +6,19 @@ cognition results (Intents) only at tick boundaries.
 """
 from __future__ import annotations
 
+import secrets
+
 import structlog
 
 from townsim.agents.agent import UTILITY_AXES, AgentState
 from townsim.agents.components import Needs, Relationship, Wallet
-from townsim.agents.schedule import is_in_window
+from townsim.agents.schedule import is_in_window, materialize_schedule
 from townsim.behavior.blackboard import Blackboard, Scope
 from townsim.behavior.trees import build_agent_tree
 from townsim.cognition.memory import MemoryEntry, MemoryStream
 from townsim.cognition.narrative import NarrativeCoordinator
 from townsim.cognition.reflection import ReflectionResult
-from townsim.config.content import AGENTS, RELATIONSHIPS, validate_content
+from townsim.config.content import AGENTS, RELATIONSHIPS, WEEKDAYS, validate_content
 from townsim.config.models import SimConfig
 from townsim.kernel.clock import SimClock
 from townsim.kernel.events import BEHAVIORAL, Event, Intent
@@ -36,6 +38,7 @@ def build_world(cfg: SimConfig, rng: RngRegistry) -> WorldState:
         log.warning("content", note=warning)
     world = WorldState(town=town)
     init_rng = rng.stream("init")
+    schedule_rng = rng.stream("schedule")   # seeded per-run schedule variation
     for spec in AGENTS:
         agent = AgentState(
             spec=spec, x=spec.home_pos[0], y=spec.home_pos[1],
@@ -50,6 +53,7 @@ def build_world(cfg: SimConfig, rng: RngRegistry) -> WorldState:
                 decay_per_tick=cfg.memory.recency_decay_per_tick,
             ),
         )
+        agent.schedule, agent.sleep_window = materialize_schedule(spec, schedule_rng)
         for other_id, rel in RELATIONSHIPS.get(spec.id, {}).items():
             agent.relationships[other_id] = Relationship(
                 kind=rel["type"], affinity=float(rel["affinity"]),
@@ -63,8 +67,16 @@ class Kernel:
     def __init__(self, cfg: SimConfig, *, narrative: NarrativeCoordinator | None = None,
                  run_dir=None) -> None:
         self.cfg = cfg
-        self.clock = SimClock(cfg.kernel.tick_minutes, cfg.kernel.day_start_hour)
+        if cfg.kernel.seed is None:
+            # Fresh world every run; the value is logged and journaled so any
+            # run can be replayed exactly by pinning it with --seed.
+            cfg.kernel.seed = secrets.randbits(31)
+            log.info("random seed drawn", seed=cfg.kernel.seed)
         self.rng = RngRegistry(cfg.kernel.seed)
+        start_weekday = cfg.kernel.start_weekday or WEEKDAYS[
+            self.rng.stream("calendar").randrange(7)]
+        self.clock = SimClock(cfg.kernel.tick_minutes, cfg.kernel.day_start_hour,
+                              start_weekday)
         self.world = build_world(cfg, self.rng)
         self.bb = Blackboard()
         self.systems = default_systems()
@@ -73,6 +85,7 @@ class Kernel:
         self.journal = Journal(self.run_dir, cfg.kernel.seed,
                                config_summary={"tick_minutes": cfg.kernel.tick_minutes,
                                                "agents": len(self.world.agents),
+                                               "start_weekday": start_weekday,
                                                "provider": cfg.llm.resolve_provider()})
         self.tick = 0
         self.paused = False
@@ -230,7 +243,7 @@ class Kernel:
         return self.clock.at(self.tick)
 
     def is_sleep_window(self, agent: AgentState) -> bool:
-        start, end = agent.spec.sleep_window
+        start, end = agent.sleep_window
         return is_in_window(self.now().hour, start, end)
 
     def close(self) -> None:

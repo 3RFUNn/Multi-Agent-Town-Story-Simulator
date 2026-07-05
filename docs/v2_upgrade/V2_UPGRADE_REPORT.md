@@ -745,4 +745,4 @@ def is_in_window(hour: int, start: int, end: int) -> bool:
 
 ---
 
-*Supporting artifacts in this directory: `findings_verified.json` (all 53 findings with full mechanisms and verification justifications), `research_verified.json` (citations, venues, metrics, novelty angles, library statuses), `audit_results_raw.json` (complete workflow output), `audit_workflow.js` (the orchestration script), `drafts/` (working drafts).*
+*Supporting artifacts in this directory: `findings_verified.json` (all 53 findings with full mechanisms and verification justifications), `research_verified.json` (citations, venues, metrics, novelty angles, library statuses), `review_findings.json` (the 26 verified V2 review findings), `audit_workflow.js` (the orchestration script). The raw workflow output and working drafts were removed from the working tree during the post-V2 cleanup; they remain in git history (commits before the cleanup on `MATSS-V2.0`).*

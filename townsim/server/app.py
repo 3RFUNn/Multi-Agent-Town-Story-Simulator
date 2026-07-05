@@ -64,8 +64,14 @@ def create_app(cfg: SimConfig | None = None) -> FastAPI:
             await asyncio.wait_for(sim_task, timeout=120)
         except asyncio.TimeoutError:
             sim_task.cancel()
-        await narrative.stop()
-        kernel.flush_intents()   # R13: results completed during stop() still land
+        except Exception:
+            pass   # sim crash — already logged loudly by _observe_sim_task
+        finally:
+            # Teardown must run even on the crashed-sim path: the kernel's
+            # creator owns the close, and a crash must still close the journal.
+            await narrative.stop()
+            kernel.flush_intents()   # R13: results completed during stop() still land
+            kernel.close()
 
     app = FastAPI(title="Town Simulator V2", lifespan=lifespan)
     app.state.kernel = kernel

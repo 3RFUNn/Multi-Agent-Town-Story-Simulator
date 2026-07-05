@@ -60,8 +60,11 @@ class TestDeterminism:
         for _ in range(2):
             kernel = make_kernel(cfg, with_narrative=True)
             kernel.narrative.start()
-            await run_kernel(kernel, max_days=1)
-            await kernel.narrative.stop()
+            try:
+                await run_kernel(kernel, max_days=1)
+                await kernel.narrative.stop()
+            finally:
+                kernel.close()   # R26: close journals on ANY exit path
             hashes.append(kernel.journal.determinism_hash())
         assert hashes[0] == hashes[1]
 
@@ -70,8 +73,11 @@ class TestTwoDayRun:
     async def test_full_pipeline(self, cfg):
         kernel = make_kernel(cfg, with_narrative=True)
         kernel.narrative.start()
-        await run_kernel(kernel, max_days=2)
-        await kernel.narrative.stop()
+        try:
+            await run_kernel(kernel, max_days=2)
+            await kernel.narrative.stop()
+        finally:
+            kernel.close()   # R26: close journals on ANY exit path
 
         world = kernel.world
         # Stories: one per completed day (V1 lost every one of these — F04).
@@ -99,8 +105,11 @@ class TestTwoDayRun:
 
         kernel = make_kernel(cfg, with_narrative=True)
         kernel.narrative.start()
-        await run_kernel(kernel, max_days=2)
-        await kernel.narrative.stop()
+        try:
+            await run_kernel(kernel, max_days=2)
+            await kernel.narrative.stop()
+        finally:
+            kernel.close()   # R26: close journals on ANY exit path
         _, events = read_journal(kernel.run_dir / "journal.jsonl")
         charges = Counter()
         for event in events:
@@ -115,8 +124,11 @@ class TestTwoDayRun:
 
         kernel = make_kernel(cfg, with_narrative=True)
         kernel.narrative.start()
-        await run_kernel(kernel, max_days=2)
-        await kernel.narrative.stop()
+        try:
+            await run_kernel(kernel, max_days=2)
+            await kernel.narrative.stop()
+        finally:
+            kernel.close()   # R26: close journals on ANY exit path
         _, events = read_journal(kernel.run_dir / "journal.jsonl")
         started = [e for e in events if e["type"] == "conversation_started"]
         ended = [e for e in events if e["type"] == "conversation_ended"]

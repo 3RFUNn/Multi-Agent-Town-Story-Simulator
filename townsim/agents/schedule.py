@@ -2,13 +2,21 @@
 
 The scheduler answers one question per agent per tick: "what does your
 schedule say you should be doing right now?" Sleep windows take precedence,
-then reflection-accepted overrides, then the weekday/weekend template.
+then reflection-accepted overrides, then the agent's materialized schedule
+(a seeded per-run variation of the weekday/weekend template).
 """
 from __future__ import annotations
 
+import random
+
 from townsim.agents.agent import AgentState
-from townsim.config.content import SCHEDULE_TEMPLATES
+from townsim.config.content import SCHEDULE_TEMPLATES, AgentSpec
 from townsim.kernel.clock import SimTime
+
+# Per-run schedule variation knobs (consumed by materialize_schedule).
+JITTER_SHIFTS = (-1, 0, 1)      # whole-schedule phase shift, hours
+SHRINK_CHANCE = 0.35            # per-window chance to lose one hour
+MIN_SHRINK_DURATION = 2         # never shrink a window below 1 hour
 
 
 def is_in_window(hour: int, start: int, end: int) -> bool:
@@ -20,8 +28,46 @@ def is_in_window(hour: int, start: int, end: int) -> bool:
     return hour >= start or hour < end
 
 
+def materialize_schedule(
+    spec: AgentSpec, rng: random.Random,
+) -> tuple[dict[str, dict[tuple[int, int], str]], tuple[int, int]]:
+    """A seeded per-run variation of the agent's schedule template, so no
+    two runs play out identical days: the whole schedule (sleep included)
+    phase-shifts by -1/0/+1 hour, and individual windows occasionally
+    shrink by one hour from either edge.
+
+    Shifting everything rigidly preserves the template's non-overlap
+    invariant, and shrinking a window inside its own original span can
+    never create an overlap either — gaps just fall through to the
+    behavior tree's free-time layer. Same seed -> identical schedules.
+    """
+    shift = rng.choice(JITTER_SHIFTS)
+    template = SCHEDULE_TEMPLATES[spec.schedule_template]
+    schedule: dict[str, dict[tuple[int, int], str]] = {}
+    for day_kind, windows in template.items():
+        materialized: dict[tuple[int, int], str] = {}
+        for (start, end), activity in windows.items():
+            duration = (end - start) % 24
+            new_start = (start + shift) % 24
+            if duration >= MIN_SHRINK_DURATION and rng.random() < SHRINK_CHANCE:
+                if rng.random() < 0.5:
+                    new_start = (new_start + 1) % 24   # start an hour later
+                duration -= 1                          # or end an hour earlier
+            materialized[(new_start, (new_start + duration) % 24)] = activity
+        schedule[day_kind] = materialized
+    sleep_start, sleep_end = spec.sleep_window
+    sleep_window = ((sleep_start + shift) % 24, (sleep_end + shift) % 24)
+    return schedule, sleep_window
+
+
+def _windows(agent: AgentState) -> dict[str, dict[tuple[int, int], str]]:
+    """The agent's materialized per-run schedule; bare AgentStates (tests,
+    tools) fall back to the pristine template."""
+    return agent.schedule or SCHEDULE_TEMPLATES[agent.spec.schedule_template]
+
+
 def is_sleep_time(agent: AgentState, hour: int) -> bool:
-    start, end = agent.spec.sleep_window
+    start, end = agent.sleep_window
     return is_in_window(hour, start, end)
 
 
@@ -34,9 +80,8 @@ def scheduled_activity(agent: AgentState, now: SimTime) -> str | None:
         if day_index == now.day_index and is_in_window(now.hour, start, end):
             return activity
 
-    template = SCHEDULE_TEMPLATES[agent.spec.schedule_template]
     day_kind = "weekends" if now.weekday in ("Saturday", "Sunday") else "weekdays"
-    windows = template.get(day_kind, {})
+    windows = _windows(agent).get(day_kind, {})
     for (start, end), activity in windows.items():
         if is_in_window(now.hour, start, end):
             return activity
@@ -54,10 +99,9 @@ def slot_for(agent: AgentState, now: SimTime, activity: str) -> tuple[int, int]:
         if day_index == now.day_index and a == activity and is_in_window(now.hour, start, end):
             return (start, end)
     if activity == "sleep_at_home":
-        return agent.spec.sleep_window
-    template = SCHEDULE_TEMPLATES[agent.spec.schedule_template]
+        return agent.sleep_window
     day_kind = "weekends" if now.weekday in ("Saturday", "Sunday") else "weekdays"
-    for (start, end), a in template.get(day_kind, {}).items():
+    for (start, end), a in _windows(agent).get(day_kind, {}).items():
         if a == activity and is_in_window(now.hour, start, end):
             return (start, end)
     return (now.hour, (now.hour + 1) % 24)

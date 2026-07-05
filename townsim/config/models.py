@@ -11,8 +11,10 @@ import os
 from pathlib import Path
 
 import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from townsim.config.content import WEEKDAYS
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
@@ -35,6 +37,11 @@ class LLMConfig(BaseModel):
     # Native OpenRouter fallback routing: when the primary model is saturated
     # (":free" pools often are), OpenRouter tries these in order.
     openrouter_fallback_models: list[str] = Field(default_factory=list)
+    # Discover EVERY :free model from GET /models at startup and rotate
+    # through them (3 per request — the API's routing cap) so a saturated
+    # pool instantly falls through to backups. Configured models keep
+    # priority at the head of the pool.
+    openrouter_auto_free_models: bool = True
     openrouter_api_key_env: str = "OPENROUTER_API_KEY"
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
     reasoning: bool = True   # send {"reasoning": {"enabled": true}} (OpenRouter)
@@ -98,10 +105,29 @@ class InteractionConfig(BaseModel):
 
 
 class KernelConfig(BaseModel):
-    seed: int = 42
+    # None -> a fresh random seed is drawn for every run (logged and written
+    # to the journal header, so any run can still be replayed exactly with
+    # --seed <that value>). Set an int to pin the whole run.
+    seed: int | None = None
     tick_minutes: int = 2
     ticks_per_second: float = 2.5       # wall-clock pacing; 0 = headless flat-out
     day_start_hour: int = 8             # hour of day at tick 0 of day 0 (V1 parity)
+    # None -> the starting weekday is derived from the seed (different runs
+    # start on different days); set a name ("Monday", ...) to pin it.
+    start_weekday: str | None = None
+
+    @field_validator("start_weekday")
+    @classmethod
+    def _valid_weekday(cls, value: str | None) -> str | None:
+        """Fail at config-load time with an actionable message (not deep in
+        SimClock), and forgive casing: 'friday' -> 'Friday'."""
+        if value is None or not value.strip():
+            return None
+        name = value.strip().capitalize()
+        if name not in WEEKDAYS:
+            raise ValueError(
+                f"kernel.start_weekday must be one of {WEEKDAYS} (got {value!r})")
+        return name
     snapshot_every_ticks: int = 360
     # Strict mode: at each day rollover, wait for cognition (diaries,
     # reflections, story) and apply the results at that exact tick. Makes
@@ -111,7 +137,7 @@ class KernelConfig(BaseModel):
 
 
 class PathsConfig(BaseModel):
-    map_file: Path = PROJECT_ROOT / "static" / "map_data.json"
+    map_file: Path = PROJECT_ROOT / "townsim" / "world" / "map_data.json"
     runs_dir: Path = PROJECT_ROOT / "runs"
     prompts_dir: Path = PROJECT_ROOT / "prompts"
 

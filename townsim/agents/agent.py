@@ -26,6 +26,11 @@ class AgentState:
     wallet: Wallet = field(default_factory=Wallet)
     relationships: dict[str, Relationship] = field(default_factory=dict)
 
+    # --- schedule (materialized per run with seeded jitter; empty dict /
+    #     None fall back to the spec's template so bare AgentStates work) ---
+    schedule: dict[str, dict[tuple[int, int], str]] = field(default_factory=dict)
+    sleep_window: tuple[int, int] | None = None
+
     # --- FSM ---
     state: str = "idle"                      # idle | moving | doing_action | interacting
     current_activity: str | None = None      # what the schedule says right now
@@ -56,6 +61,10 @@ class AgentState:
     bt_path: list[str] = field(default_factory=list)
     behavior_tree: Node | None = None
     _last_log_text: str = ""
+
+    def __post_init__(self) -> None:
+        if self.sleep_window is None:
+            self.sleep_window = self.spec.sleep_window
 
     @property
     def id(self) -> str:

@@ -85,6 +85,8 @@ def cmd_run(args) -> int:
             await run_kernel(kernel, max_days=args.days)
         finally:
             await narrative.stop()
+            kernel.flush_intents()   # results that completed during stop()
+            kernel.close()
         log.info("done", ticks=kernel.tick, stories=len(kernel.world.stories),
                  determinism_hash=kernel.journal.determinism_hash(),
                  gateway=gateway.stats)

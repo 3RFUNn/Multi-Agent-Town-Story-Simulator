@@ -38,11 +38,16 @@ class SimTime:
 
 
 class SimClock:
-    def __init__(self, tick_minutes: int = 2, day_start_hour: int = 8) -> None:
+    def __init__(self, tick_minutes: int = 2, day_start_hour: int = 8,
+                 start_weekday: str = "Monday") -> None:
         if MINUTES_PER_DAY % tick_minutes != 0:
             raise ValueError("tick_minutes must divide a day evenly")
+        if start_weekday not in WEEKDAYS:
+            raise ValueError(f"unknown weekday: {start_weekday!r}")
         self.tick_minutes = tick_minutes
         self.day_start_hour = day_start_hour
+        self.start_weekday = start_weekday
+        self._weekday_offset = WEEKDAYS.index(start_weekday)
         self.ticks_per_day = MINUTES_PER_DAY // tick_minutes
 
     def at(self, tick: int) -> SimTime:
@@ -52,7 +57,7 @@ class SimClock:
         return SimTime(
             tick=tick,
             day_index=day_index,
-            weekday=WEEKDAYS[day_index % 7],
+            weekday=WEEKDAYS[(day_index + self._weekday_offset) % 7],
             hour=minutes_of_day // 60,
             minute=minutes_of_day % 60,
         )

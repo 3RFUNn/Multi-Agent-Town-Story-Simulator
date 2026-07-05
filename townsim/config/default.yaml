@@ -2,7 +2,11 @@
 # Copy to <project root>/townsim.yaml to customize; any key can also be set via
 # environment variables: TOWNSIM_KERNEL__SEED=7, TOWNSIM_LLM__PROVIDER=fake, ...
 kernel:
-  seed: 42
+  seed: null            # null -> fresh random seed (and start weekday, and
+                        # schedule variation) every run; the drawn seed is
+                        # logged + journaled, so set an int (or pass --seed)
+                        # to pin/replay any run exactly
+  # start_weekday: Monday   # uncomment to pin; default derives from the seed
   tick_minutes: 2
   ticks_per_second: 2.5
   day_start_hour: 8
@@ -13,6 +17,7 @@ llm:
                         #         else fake (offline deterministic)
   model: gpt-4.1-mini                          # used by provider: openai
   openrouter_model: google/gemma-4-31b-it:free # used by provider: openrouter
+  openrouter_auto_free_models: true            # rotate through ALL :free models on saturation
   reasoning: true                              # OpenRouter reasoning flag
 
 needs:

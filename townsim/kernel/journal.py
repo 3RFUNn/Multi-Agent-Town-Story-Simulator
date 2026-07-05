@@ -45,8 +45,9 @@ class Journal:
         return self._hash.hexdigest()
 
     def close(self) -> None:
-        self._file.flush()
-        self._file.close()
+        if not self._file.closed:
+            self._file.flush()
+            self._file.close()
 
 
 def new_run_dir(runs_root: Path, seed: int) -> Path:

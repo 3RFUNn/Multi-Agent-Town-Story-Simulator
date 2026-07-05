@@ -9,10 +9,5 @@ numpy>=1.26
 structlog>=24.1
 tenacity>=8.2
 openai>=1.30
-
-# Legacy V1 runtime (app.py / command.py)
-flask>=3.0
-flask-socketio>=5.3
-python-socketio[client]>=5.11
+httpx>=0.27
 python-dotenv>=1.0
-requests>=2.31

@@ -56,4 +56,5 @@ async def run_kernel(kernel: Kernel, *, max_days: int | None = None,
             events = kernel.flush_intents()  # last day's diaries/story land in the journal
             if on_tick is not None and events:
                 await on_tick(kernel, events)
-        kernel.close()
+        # The kernel's creator closes it — cognition results that complete
+        # during a later narrative.stop() still need a live journal (R13).

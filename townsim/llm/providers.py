@@ -35,7 +35,10 @@ class OpenAIProvider:
             AsyncOpenAI,
             RateLimitError,
         )
-        self._client = AsyncOpenAI(api_key=api_key, timeout=timeout)
+        # max_retries=0: the gateway owns retry policy (paced, backoff-capped);
+        # the SDK's hidden internal retries would multiply the real request
+        # rate and defeat rate-limit pacing.
+        self._client = AsyncOpenAI(api_key=api_key, timeout=timeout, max_retries=0)
         self._model = model
         self._embed_model = embed_model
         self._transient = (RateLimitError, APITimeoutError, APIConnectionError)
@@ -102,6 +105,7 @@ class OpenRouterProvider:
             RateLimitError,
         )
         self._client = AsyncOpenAI(api_key=api_key, base_url=base_url, timeout=timeout,
+                                   max_retries=0,  # gateway owns retries (see OpenAIProvider)
                                    default_headers={
                                        "HTTP-Referer": "https://github.com/3RFUNn/Multi-Agent-Town-Story-Simulator",
                                        "X-Title": "Multi-Agent Town Story Simulator",

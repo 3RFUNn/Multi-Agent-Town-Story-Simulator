@@ -21,6 +21,10 @@ from townsim.config.models import SimConfig, load_config
 def _setup_logging(verbose: bool) -> None:
     level = logging.DEBUG if verbose else logging.INFO
     logging.basicConfig(level=level, format="%(message)s", stream=sys.stdout)
+    # HTTP client libraries log every request at INFO — far too noisy for a
+    # simulation that makes hundreds of LLM calls.
+    for noisy in ("httpx", "httpcore", "openai"):
+        logging.getLogger(noisy).setLevel(logging.WARNING)
     structlog.configure(
         wrapper_class=structlog.make_filtering_bound_logger(level),
         processors=[

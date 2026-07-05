@@ -1,0 +1,172 @@
+{
+ "related_work": [
+  {
+   "name": "Generative Agents (Smallville)",
+   "citation": "Joon Sung Park, Joseph C. O'Brien, Carrie Jun Cai, Meredith Ringel Morris, Percy Liang, and Michael S. Bernstein. 2023. Generative Agents: Interactive Simulacra of Human Behavior. In Proceedings of the 36th Annual ACM Symposium on User Interface Software and Technology (UIST '23), San Francisco, CA. ACM. DOI: 10.1145/3586183.3606763 (arXiv:2304.03442).",
+   "summary": "Introduces an architecture where LLM-driven agents in a sandbox town maintain a natural-language memory stream with retrieval scored by recency/importance/relevance, synthesize higher-level reflections, and plan/react via LLM prompting; 25 agents produced emergent social behaviors like party organization and relationship formation. Evaluated with interview-based believability rankings by 100 human raters converted to TrueSkill ratings, plus ablations showing memory, reflection, and planning each matter.",
+   "difference_hook": "The LLM sits inside every agent's perceive-plan-act loop, making behavior expensive, slow, and non-reproducible; it produces no external narrative artifacts (diaries or a town-wide story) from a verifiable event log. A BT+LLM hybrid keeps behavior deterministic, cheap, and re-runnable from a seed, and its LLM output can be audited sentence-by-sentence against symbolic ground-truth events."
+  },
+  {
+   "name": "Voyager",
+   "citation": "Guanzhi Wang, Yuqi Xie, Yunfan Jiang, Ajay Mandlekar, Chaowei Xiao, Yuke Zhu, Linxi Fan, and Anima Anandkumar. 2024. Voyager: An Open-Ended Embodied Agent with Large Language Models. Transactions on Machine Learning Research (TMLR), March 2024 (arXiv:2305.16291, 2023). OpenReview: ehfRiF0R3a.",
+   "summary": "The first LLM-powered lifelong-learning agent in Minecraft, combining an automatic curriculum, an ever-growing skill library of executable code, and iterative prompting with environment feedback and self-verification. It discovered 3.3x more unique items, traveled 2.3x farther, and unlocked tech-tree milestones up to 15.3x faster than prior LLM-agent baselines.",
+   "difference_hook": "Voyager is a single agent optimizing task competence (skill acquisition via code generation), not a multi-agent social simulation; it has no believability goals, no social memory, and generates no narrative artifacts. It also keeps GPT-4 in the action loop, whereas a BT hybrid confines the LLM to asynchronous post-hoc cognition."
+  },
+  {
+   "name": "AI Town (a16z)",
+   "citation": "a16z-infra. 2023. AI Town: A MIT-licensed, deployable starter kit for a virtual town where AI characters live, chat and socialize. Open-source software, GitHub: a16z-infra/ai-town (TypeScript/Convex; ~10.1k stars).",
+   "summary": "An engineering-focused open-source re-implementation of the Generative Agents concept as a deployable JS/TS starter kit, using Convex as the game engine/database, PixiJS rendering, and pluggable LLMs (Ollama, OpenAI, Together.ai) for character conversation and behavior. Explicitly inspired by Park et al. and aimed at making multiplayer-scalable LLM town simulations easy to fork.",
+   "difference_hook": "AI Town is a software artifact, not a research contribution: it reports no evaluation, has no behavior-tree or utility-selection layer, no reflection loop, and does not distill event logs into diaries or a town chronicle. It is best cited as evidence of ecosystem demand rather than as a competing architecture."
+  },
+  {
+   "name": "Project Sid (Altera)",
+   "citation": "Altera.AL: Andrew Ahn, Nic Becker, Stephanie Carroll, Nico Christie, Manuel Cortes, Arda Demirci, Melissa Du, Frankie Li, Shuying Luo, Peter Y. Wang, Mathew Willows, Feitong Yang, and Guangyu Robert Yang. 2024. Project Sid: Many-agent simulations toward AI civilization. arXiv:2411.00114 (submitted October 31, 2024).",
+   "summary": "Simulates 10-1000+ LLM agents in Minecraft using the PIANO (Parallel Information Aggregation via Neural Orchestration) architecture, which runs concurrent cognitive modules while maintaining coherence across output streams for real-time interaction. Reports emergence of specialized roles, adherence to and amendment of collective rules (e.g., taxation), and propagation of cultural memes and religion, framed as 'civilizational benchmarks.'",
+   "difference_hook": "PIANO parallelizes LLM cognition but keeps it in the control loop for every agent, incurring per-agent inference cost and non-determinism at scale; it measures civilizational progress, not narrative production. It has no symbolic BT substrate, no utility arbiter, and no mechanism for turning ground-truth logs into focalized per-agent diaries plus a global story."
+  },
+  {
+   "name": "AgentSociety",
+   "citation": "Jinghua Piao, Yuwei Yan, Jun Zhang, Nian Li, Junbo Yan, Xiaochong Lan, et al. (Tsinghua University FIB Lab). 2025. AgentSociety: Large-Scale Simulation of LLM-Driven Generative Agents Advances Understanding of Human Behaviors and Society. arXiv:2502.08691. Open-source platform: github.com/tsinghua-fib-lab/agentsociety.",
+   "summary": "A large-scale social simulator combining LLM-driven agents endowed with theory-grounded 'minds' (emotions, needs, motivations) with a realistic urban environment engine, generating social lives for over 10,000 agents and ~5 million interactions. Used to study polarization, misinformation spread, and policy interventions (e.g., UBI), positioning simulation as a social-science instrument.",
+   "difference_hook": "AgentSociety targets macro-social realism for social science, not game-AI believability or storytelling; validation is against aggregate real-world phenomena, not per-agent narrative coherence. It has no hybrid symbolic control layer and produces no literary artifacts from its logs."
+  },
+  {
+   "name": "GOAP / F.E.A.R. (classic planner hybrid)",
+   "citation": "Jeff Orkin. 2006. Three States and a Plan: The A.I. of F.E.A.R. In Proceedings of the Game Developers Conference (GDC 2006), San Francisco. (Slides/paper via GDC Vault and gamedevs.org.)",
+   "summary": "Canonical industry hybrid: a three-state FSM whose actions are sequenced at runtime by a STRIPS-style planner (GOAP) using A*, giving F.E.A.R.'s soldiers goal-directed squad behavior (suppression, flanking, environment use) without hand-authored mega-FSMs. It established the pattern of layering deliberative planning atop cheap reactive execution in shipped games.",
+   "difference_hook": "GOAP plans over symbolic operators only: agents have no episodic memory, no natural-language cognition, and no capacity to narrate or reflect on their own history. A BT+LLM hybrid inherits GOAP's symbolic-control economics while adding language-based retrospective sense-making that classic planners cannot express."
+  },
+  {
+   "name": "ABL / Façade (believable-agent language + drama)",
+   "citation": "Michael Mateas and Andrew Stern. 2004. A Behavior Language: Joint Action and Behavioral Idioms. In H. Prendinger and M. Ishizuka (Eds.), Life-Like Characters: Tools, Affective Functions and Applications, Springer. See also: Mateas and Stern. 2005. Structuring Content in the Façade Interactive Drama Architecture. In Proc. AIIDE 2005, AAAI.",
+   "summary": "ABL is a reactive-planning language (descended from Hap) for authoring believable agents with sequential, parallel, and joint behaviors; it implemented the character layer of Façade, the landmark interactive drama, whose beats were orchestrated by a drama manager. It remains the reference architecture for authored character believability in interactive narrative.",
+   "difference_hook": "Every behavior and story beat in ABL/Façade is hand-authored at great expense; nothing is generated, and narrative does not emerge from simulation logs. The BT+LLM approach inverts this: cheap authored behavior generates events, and the narrative layer is synthesized post hoc rather than pre-scripted."
+  },
+  {
+   "name": "Utility AI (Dave Mark, IAUS)",
+   "citation": "Dave Mark. 2009. Behavioral Mathematics for Game AI. Course Technology / Cengage Learning (Applied Mathematics series), ISBN 978-1584506843. See also: Mark et al., 'Architecture Tricks: Managing Behaviors in Time, Space, and Depth' (GDC AI Summit 2013, GDC Vault) and Mark & Lewis's Infinite Axis Utility System talks (GDC AI Summit 2015).",
+   "summary": "Formalizes utility-based decision-making for game agents: response curves map world-state considerations to scores that are combined to select actions, culminating in the data-driven Infinite Axis Utility System (IAUS) deployed in shipped titles (e.g., at ArenaNet). It is the standard alternative/complement to BTs for context-sensitive action selection.",
+   "difference_hook": "Utility AI selects among authored actions from numeric considerations but has no memory stream, no reflection, and no language faculty; scores are hand-tuned rather than derived from an agent's reflected experience. Using retrieval/reflection outputs to modulate utility-scored BT selection is precisely the coupling this literature lacks."
+  },
+  {
+   "name": "Hilburn's BT/planner hybrid",
+   "citation": "Daniel Hilburn. 2013. Simulating Behavior Trees: A Behavior Tree/Planner Hybrid Approach. In Steve Rabin (Ed.), Game AI Pro: Collected Wisdom of Game AI Professionals, Chapter 8, pp. 99-111. CRC Press. (Verified via gameaipro.com chapter listing; also reprinted in Game AI Pro 360: Guide to Architecture, Routledge 2019.)",
+   "summary": "Proposes simulating the forward execution of a behavior tree to obtain planner-like lookahead, combining BT authorability/reactivity with planning's ability to anticipate outcomes. Sits alongside sibling Game AI Pro chapters on BT starter kits (Champandard & Dunstan, ch. 6) and utility-in-BT integration (Merrill, ch. 10).",
+   "difference_hook": "Hilburn's hybrid is entirely symbolic and forward-looking (predicting action outcomes); it has no backward-looking cognition. A BT+LLM narrative hybrid adds the retrospective direction — episodic memory, reflection, and story synthesis over what the BTs already did — which no BT/planner hybrid in the Game AI Pro line attempts. Note also Bill Merrill's 'Building Utility Decisions into Your Existing Behavior Tree' (Game AI Pro 2013, ch. 10) as prior art for utility-based BT selection specifically."
+  }
+ ],
+ "venues": [
+  {
+   "venue": "AIIDE (AAAI Conference on Artificial Intelligence and Interactive Digital Entertainment)",
+   "fit_rationale": "Strongest topical fit: the home venue for game-AI architectures, believable agents, and interactive narrative (Façade was presented here). Active: AIIDE 2025 (21st) ran Nov 10-14, 2025 at U. Alberta, Edmonton; AIIDE 2026 (22nd) is in Belo Horizonte, Brazil with abstract deadline June 19, 2026 and full-paper deadline June 26, 2026 — both just passed as of July 3, 2026, so target AIIDE 2027 for a full paper (typically 8-page AAAI format) or watch for AIIDE-26 late tracks. Crucially, AIIDE has Demonstrations and Playable Experiences tracks plus an Artifact Evaluation process and permanent AIIDE Artifact Archive (aiide.org/artifacts) for software tied to accepted papers — ideal for an open-source simulator: the town simulation itself can be submitted as a playable experience/artifact alongside the paper."
+  },
+  {
+   "venue": "IEEE CoG (Conference on Games)",
+   "fit_rationale": "Active and well-matched for the systems/architecture contribution (BT+utility+LLM hybrid, scalability benchmarks). CoG 2026 runs September 1-4, 2026 in Madrid (Complutense University); 8-page full technical papers (camera-ready was May 28, 2026, so the full-paper cycle has closed), but CoG 2026 also has Call for Auxiliary Papers and Call for Demos tracks whose deadlines may still be open in July 2026 — check cog2026.org immediately; otherwise target CoG 2027. CoG historically publishes agent believability, PCG+LLM, and game-AI benchmark work, making the utility-BT-selection and cost/scalability results a natural fit."
+  },
+  {
+   "venue": "FDG (International Conference on the Foundations of Digital Games)",
+   "fit_rationale": "Active: FDG 2026 (21st) is August 10-13, 2026 at the Royal Danish Academy, Copenhagen, theme 'Research through Games; Research for Games'; regular-paper deadline (Dec 15, 2025) and late-breaking short papers/demos deadline (Mar 30, 2026) have both passed, so target FDG 2027. FDG accepts full/short papers, posters, and demos and is friendlier than CoG to interdisciplinary framing — the two-level narrative (diaries + town chronicle) and its human evaluation would fit FDG's game-studies-meets-CS profile."
+  },
+  {
+   "venue": "ACM CHI (and UIST as the closer analogue)",
+   "fit_rationale": "CHI 2026 already took place April 13-17, 2026 in Barcelona, so the next target is CHI 2027 (papers deadline typically early September 2026 — feasible from July 2026). Fit requires an HCI framing: a user study of narrative believability/comprehension, following the precedent that Generative Agents itself was published at UIST 2023. Honest caveat: for a systems-plus-evaluation contribution about agent architectures, UIST (deadline typically April) is the closer precedent venue than CHI proper; CHI fits only if human evaluation of the generated narratives is the paper's centerpiece."
+  },
+  {
+   "venue": "NeurIPS/ICLR workshops on LLM agents (e.g., ICLR 2026 MemAgents, ICLR 2026 MALGAI, NeurIPS Multi-Turn Interactions workshop)",
+   "fit_rationale": "Verified active in 2025-2026: ICLR 2026 hosted the Workshop on Memory for LLM-Based Agentic Systems (MemAgents) — a direct fit for the episodic-memory-retrieval and reflection-loop contributions — and the Workshop on Multi-Agent Learning and Generative AI (MALGAI); NeurIPS 2025 hosted the Multi-Turn Interactions in LLMs (MTI-LLM) workshop. These workshops are typically 4-9 page non-archival papers, good for fast feedback on the memory/reflection component before a full AIIDE/CoG submission. Caveat: workshop lineups change yearly — confirm the NeurIPS 2026 workshop list (announced ~Aug-Sep 2026) before committing."
+  }
+ ],
+ "metrics": [
+  {
+   "metric": "Interview-based believability ranking with TrueSkill ratings",
+   "how_to_measure": "Human evaluators watch agent 'interview' responses probing five capacities (self-knowledge, memory, plans, reactions, reflections) and rank architecture conditions by believability; rank data (Park et al.: 100 participants, 5 conditions) is converted to interval ratings via TrueSkill (Bayesian multiplayer Elo generalization), yielding a mean mu and sigma per condition (e.g., full architecture mu=29.89 vs. no-memory ablation mu=21.21).",
+   "used_by": "Park et al., Generative Agents (UIST 2023) — the de facto standard believability protocol; directly reusable to compare BT-only vs. BT+memory vs. BT+memory+reflection conditions."
+  },
+  {
+   "metric": "Ablation of cognitive components",
+   "how_to_measure": "Run the same simulation with memory retrieval, reflection, and (in our case) utility-based BT selection independently disabled, and compare believability/coherence scores across conditions; report per-component contribution as in Park et al.'s no-reflection / no-reflection-no-planning / no-memory ablations.",
+   "used_by": "Park et al. (UIST 2023); also standard in Voyager's component ablations (curriculum, skill library, self-verification)."
+  },
+  {
+   "metric": "Behavioral diversity / exploration metrics",
+   "how_to_measure": "Count distinct behaviors or outcomes over a fixed budget: Voyager measures unique items discovered (63 items in 160 prompting iterations, 3.3x baselines), map coverage / distance traveled (2.3x), and milestone unlock speed (tech-tree levels up to 15.3x faster in prompting iterations). Adapted to a town sim: distinct BT activations per agent-day, unique interaction pairs, entropy of daily activity distributions across agents and across seeded reruns.",
+   "used_by": "Wang et al., Voyager (TMLR 2024); role-specialization emergence measures in Project Sid (arXiv:2411.00114)."
+  },
+  {
+   "metric": "Collective/social emergence benchmarks",
+   "how_to_measure": "Track emergence of specialized roles, adherence to and amendment of collective rules, and propagation of cultural memes across the agent population over time, at increasing agent counts (Sid: 10-1000+ agents). For a town sim: measure relationship-graph growth, information diffusion (who learns of an event and when, verifiable from logs), and norm adoption rates.",
+   "used_by": "Project Sid / Altera (2024) 'civilizational benchmarks'; AgentSociety (arXiv:2502.08691) validates against real-world macro phenomena (polarization, misinformation spread) at 10k+ agents / ~5M interactions."
+  },
+  {
+   "metric": "Narrative quality and factual grounding (hallucination rate against event log)",
+   "how_to_measure": "Because the BT substrate emits a symbolic ground-truth event log, decompose each generated diary/story into atomic claims and label each as supported / unsupported / contradicted by the log — yielding a precision-style faithfulness score no pure-LLM simulation can compute; complement with human Likert or pairwise ratings of coherence, character consistency, and interestingness (and LLM-as-judge only as a secondary, bias-caveated signal).",
+   "used_by": "The grounding audit is a novel opportunity of this architecture (no surveyed system does it); the human-rating protocol follows Park et al.'s rater methodology and standard story-generation evaluation practice."
+  },
+  {
+   "metric": "Scalability and cost benchmarks",
+   "how_to_measure": "Report simulation throughput (ticks/sec or sim-time:real-time ratio) vs. agent count with LLM calls disabled and enabled; LLM tokens and dollar cost per simulated agent-day; and narrative-generation latency showing the async pipeline never blocks the simulation loop. Baseline comparison: Park et al. explicitly flag token cost as a limitation, and Project Sid's PIANO exists to manage real-time concurrency of in-loop LLM calls.",
+   "used_by": "Project Sid (10-1000+ agent scaling); AgentSociety (10k-agent engine benchmarks); cost-as-limitation discussion in Park et al. (UIST 2023)."
+  }
+ ],
+ "novelty_angles": [
+  "Inverted control-flow hybrid: the LLM is removed from the per-tick decision loop entirely — deterministic, utility-selected behavior trees generate all behavior, and the LLM performs only post-hoc narrative cognition (per-agent diaries, town-wide chronicle) over the factual event log. No surveyed system (Generative Agents, AI Town, Project Sid, AgentSociety) separates behavior generation from language cognition this way; they all keep LLM inference in the action loop.",
+  "Verifiable narrative grounding as a first-class metric: because behavior is symbolic and fully logged, every generated sentence can be audited against ground-truth events, enabling a hallucination-rate/faithfulness score for emergent-narrative generation. Pure LLM-agent systems cannot compute this because their 'ground truth' (the memory stream) is itself LLM output.",
+  "Reflection-to-utility coupling: episodic retrieval and reflection outputs (Park et al.-style recency/importance/relevance scoring) parameterize a classical utility arbiter over behavior trees, rather than being spliced into prompts — connecting the Generative Agents cognitive loop to the Game AI Pro utility/BT tradition (Merrill 2013; Mark 2009) in a way neither literature has done.",
+  "Reproducibility and cost economics: seeded BT simulation reruns are bit-identical and near-free, with LLM cost amortized asynchronously and off the critical path — a direct answer to the cost/latency limitations Park et al. acknowledge and that PIANO (Project Sid) addresses only by parallelizing in-loop inference; this supports orders-of-magnitude more agent-hours per dollar and controlled A/B ablations.",
+  "Two-level focalized narration from one ground truth: the same event log is rendered both as first-person per-agent diaries and as an omniscient town chronicle, making narrative focalization/perspective over shared emergent events an object of study — absent from all surveyed systems, which either author narrative by hand (Facade) or don't produce narrative artifacts at all.",
+  "Honest non-novelty disclosure: BT/planner hybrids (Hilburn, Game AI Pro 2013), utility-driven BT selection (Merrill, Game AI Pro 2013), the memory-stream/reflection design itself (Park et al. 2023), retrieval-augmented agent memory (ICLR 2026 MemAgents workshop territory), and LLM diary/story generation in isolation are each established; the defensible claim is the specific composition, the grounding-auditable narrative pipeline, and the cost/believability evaluation of that composition — not any individual component."
+ ],
+ "libraries": [
+  {
+   "name": "py_trees",
+   "purpose": "Behavior tree implementation driving per-agent autonomous behavior (the deterministic control substrate).",
+   "status_note": "Maintained: v2.4.0 released Nov 13, 2025 (added ForEach decorator, CompareBlackboardVariables); splintered-reality project with a slow-but-steady release cadence — stable and production-usable as of mid-2026."
+  },
+  {
+   "name": "esper",
+   "purpose": "Lightweight Entity-Component-System managing simulation world state and per-tick systems.",
+   "status_note": "Actively maintained: v3.7 released Jan 30, 2026; described as 'a lightweight Entity System (ECS) for Python, with a focus on performance.'"
+  },
+  {
+   "name": "LiteLLM",
+   "purpose": "Provider-agnostic (async-capable) LLM API client for the narrative-generation pipeline.",
+   "status_note": "Very actively maintained by BerriAI with a rapid release cadence: v1.90.2 released Jul 1, 2026."
+  },
+  {
+   "name": "instructor",
+   "purpose": "Pydantic-validated structured outputs from LLM calls (typed diary entries, story sections, reflection objects).",
+   "status_note": "Actively maintained: v1.15.4 released Jun 28, 2026; tagline 'structured outputs for llm.'"
+  },
+  {
+   "name": "pydantic (v2)",
+   "purpose": "Schema definition and validation for events, memories, agent state, and narrative outputs.",
+   "status_note": "Very actively maintained industry standard: v2.13.4 released May 6, 2026 on the Rust-backed pydantic-core v2 line."
+  },
+  {
+   "name": "FastAPI",
+   "purpose": "Async web/API layer serving the simulation state and narrative endpoints.",
+   "status_note": "Very actively maintained: v0.139.0 released Jul 1, 2026; remains pre-1.0 by version number but is a mature, dominant Python async framework."
+  },
+  {
+   "name": "structlog",
+   "purpose": "Structured event logging producing the machine-readable factual event log that the narrative layer consumes.",
+   "status_note": "Actively maintained (CalVer scheme): v26.1.0 released Jun 6, 2026."
+  },
+  {
+   "name": "pytest",
+   "purpose": "Primary test framework for simulation, BT, and pipeline tests.",
+   "status_note": "Very actively maintained: v9.1.1 released Jun 19, 2026 (9.x line; requires Python >=3.10)."
+  },
+  {
+   "name": "hypothesis",
+   "purpose": "Property-based testing of BT/utility-selection invariants and event-log/memory consistency.",
+   "status_note": "Extremely actively maintained with near-daily releases: v6.156.1 released Jul 3, 2026."
+  },
+  {
+   "name": "tenacity",
+   "purpose": "Retry/backoff policies around LLM API calls in the async narrative pipeline.",
+   "status_note": "Maintained and stable: v9.1.4 released Feb 7, 2026 (requires Python >=3.10); mature library with an infrequent-but-active release pattern."
+  }
+ ]
+}

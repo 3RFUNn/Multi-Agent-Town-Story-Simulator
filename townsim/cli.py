@@ -47,6 +47,13 @@ def _apply_overrides(cfg: SimConfig, args) -> SimConfig:
     return cfg
 
 
+def _dashboard_url(host: str, port: int) -> str:
+    """Clickable URL for the terminal: bind-all addresses aren't browsable,
+    so display the loopback address instead."""
+    display_host = "127.0.0.1" if host in ("", "0.0.0.0", "::") else host
+    return f"http://{display_host}:{port}"
+
+
 def cmd_serve(args) -> int:
     import uvicorn
 
@@ -54,6 +61,8 @@ def cmd_serve(args) -> int:
 
     cfg = _apply_overrides(load_config(args.config), args)
     app = create_app(cfg)
+    url = _dashboard_url(cfg.server.host, cfg.server.port)
+    print(f"\n  Town Simulator dashboard:  {url}   (Ctrl+C to stop)\n", flush=True)
     uvicorn.run(app, host=cfg.server.host, port=cfg.server.port, log_level="warning")
     return 0
 

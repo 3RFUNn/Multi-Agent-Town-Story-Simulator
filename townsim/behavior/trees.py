@@ -11,11 +11,24 @@ Root priority order (fixing V1's F31 priority inversion):
 from __future__ import annotations
 
 from townsim.behavior.core import (
-    Branch, Condition, Node, Selector, Sequence, TickContext, UtilitySelector, guarded_move,
+    Branch,
+    Condition,
+    Node,
+    Selector,
+    Sequence,
+    TickContext,
+    UtilitySelector,
+    guarded_move,
 )
 from townsim.behavior.nodes import (
-    ApproachAndChat, EatEmergencyMeal, EmergencySleep, GoTo, IdleFlavor,
-    StartScheduledActivity, TakeRest, rest_spot_for,
+    ApproachAndChat,
+    EatEmergencyMeal,
+    EmergencySleep,
+    GoTo,
+    IdleFlavor,
+    StartScheduledActivity,
+    TakeRest,
+    rest_spot_for,
 )
 from townsim.config.content import ACTIVITY_DATA
 

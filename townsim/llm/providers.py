@@ -29,7 +29,11 @@ class OpenAIProvider:
     def __init__(self, api_key: str, model: str = "gpt-4.1-mini",
                  embed_model: str = "text-embedding-3-small", timeout: float = 60.0) -> None:
         from openai import (
-            APIConnectionError, APIStatusError, APITimeoutError, AsyncOpenAI, RateLimitError,
+            APIConnectionError,
+            APIStatusError,
+            APITimeoutError,
+            AsyncOpenAI,
+            RateLimitError,
         )
         self._client = AsyncOpenAI(api_key=api_key, timeout=timeout)
         self._model = model

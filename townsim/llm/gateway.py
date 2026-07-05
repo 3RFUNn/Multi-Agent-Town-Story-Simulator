@@ -12,7 +12,10 @@ import numpy as np
 import structlog
 from pydantic import BaseModel, ValidationError
 from tenacity import (
-    AsyncRetrying, retry_if_exception_type, stop_after_attempt, wait_exponential_jitter,
+    AsyncRetrying,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential_jitter,
 )
 
 from townsim.llm.providers import LLMProvider, TransientLLMError

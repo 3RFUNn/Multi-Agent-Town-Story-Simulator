@@ -25,7 +25,7 @@ class ReflectionResult(BaseModel):
     goal_adjustments: list[GoalAdjustment] = Field(default_factory=list, max_length=3)
     schedule_proposals: list[ScheduleProposal] = Field(default_factory=list, max_length=2)
 
-    def sanitized(self, valid_axes: tuple[str, ...]) -> "ReflectionResult":
+    def sanitized(self, valid_axes: tuple[str, ...]) -> ReflectionResult:
         """Kernel-side guard: never trust even validated output blindly."""
         return ReflectionResult(
             mood=self.mood.strip()[:40] or "settled",

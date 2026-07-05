@@ -29,7 +29,7 @@ class TownMap:
                 self._place_of[coord] = place.key
 
     @classmethod
-    def load(cls, path: Path) -> "TownMap":
+    def load(cls, path: Path) -> TownMap:
         with open(path, encoding="utf-8") as f:
             data = json.load(f)
         places = {

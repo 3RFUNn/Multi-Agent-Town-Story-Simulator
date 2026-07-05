@@ -3,7 +3,11 @@ from __future__ import annotations
 import pytest
 
 from townsim.config.content import (
-    AGENTS, SCHEDULE_TEMPLATES, merge_traits, sociability_for, validate_content,
+    AGENTS,
+    SCHEDULE_TEMPLATES,
+    merge_traits,
+    sociability_for,
+    validate_content,
 )
 from townsim.config.models import SimConfig
 from townsim.world.grid import TownMap

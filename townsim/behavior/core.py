@@ -12,15 +12,16 @@ from __future__ import annotations
 
 import enum
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from random import Random
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from townsim.agents.agent import AgentState
+    from townsim.behavior.blackboard import Blackboard
     from townsim.config.models import SimConfig
     from townsim.kernel.clock import SimTime
-    from townsim.behavior.blackboard import Blackboard
     from townsim.world.state import WorldState
 
 
@@ -32,12 +33,12 @@ class Status(enum.Enum):
 
 @dataclass
 class TickContext:
-    agent: "AgentState"
-    world: "WorldState"
-    cfg: "SimConfig"
-    now: "SimTime"
+    agent: AgentState
+    world: WorldState
+    cfg: SimConfig
+    now: SimTime
     rng: Random
-    bb: "Blackboard"
+    bb: Blackboard
     emit: Callable[..., None]          # emit(event_type, **data)
     log: Callable[..., None]           # log(text, importance=0.3, participants=())
     trace: list[str] = field(default_factory=list)

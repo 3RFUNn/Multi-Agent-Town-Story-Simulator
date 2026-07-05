@@ -6,8 +6,8 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
 from townsim.agents.components import ActionState, MoveIntent, Needs, Relationship, Wallet
-from townsim.config.content import AgentSpec
 from townsim.cognition.memory import MemoryStream
+from townsim.config.content import AgentSpec
 
 if TYPE_CHECKING:
     from townsim.behavior.core import Node
@@ -54,7 +54,7 @@ class AgentState:
     current_action: str = "Starting the day"
     recent_log: deque = field(default_factory=lambda: deque(maxlen=50))
     bt_path: list[str] = field(default_factory=list)
-    behavior_tree: "Node | None" = None
+    behavior_tree: Node | None = None
     _last_log_text: str = ""
 
     @property

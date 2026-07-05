@@ -4,7 +4,13 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from townsim.behavior.core import (
-    Branch, Condition, Leaf, Selector, Sequence, Status, UtilitySelector,
+    Branch,
+    Condition,
+    Leaf,
+    Selector,
+    Sequence,
+    Status,
+    UtilitySelector,
 )
 
 

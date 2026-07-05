@@ -45,6 +45,7 @@ def _apply_overrides(cfg: SimConfig, args) -> SimConfig:
 
 def cmd_serve(args) -> int:
     import uvicorn
+
     from townsim.server.app import create_app
 
     cfg = _apply_overrides(load_config(args.config), args)

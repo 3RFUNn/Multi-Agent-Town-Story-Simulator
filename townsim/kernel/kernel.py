@@ -9,7 +9,7 @@ from __future__ import annotations
 import structlog
 
 from townsim.agents.agent import UTILITY_AXES, AgentState
-from townsim.agents.components import Needs, Wallet
+from townsim.agents.components import Needs, Relationship, Wallet
 from townsim.agents.schedule import is_in_window
 from townsim.behavior.blackboard import Blackboard
 from townsim.behavior.trees import build_agent_tree
@@ -25,7 +25,6 @@ from townsim.kernel.rng import RngRegistry
 from townsim.systems import SysContext, default_systems
 from townsim.world.grid import TownMap
 from townsim.world.state import WorldState
-from townsim.agents.components import Relationship
 
 log = structlog.get_logger(__name__)
 

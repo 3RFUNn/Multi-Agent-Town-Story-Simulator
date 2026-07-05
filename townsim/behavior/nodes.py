@@ -7,7 +7,7 @@ charged once per schedule slot (F13).
 """
 from __future__ import annotations
 
-from typing import Callable
+from collections.abc import Callable
 
 from townsim.agents.components import ActionState, MoveIntent
 from townsim.agents.schedule import slot_for, ticks_until_hour

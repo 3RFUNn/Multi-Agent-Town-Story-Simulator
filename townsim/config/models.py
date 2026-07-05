@@ -32,6 +32,9 @@ class LLMConfig(BaseModel):
     legacy_api_key_env: str = "API_KEY"  # V1 used this name; honored with a warning
     # OpenRouter (OpenAI-compatible endpoint; any openrouter.ai model id)
     openrouter_model: str = "google/gemma-4-31b-it:free"
+    # Native OpenRouter fallback routing: when the primary model is saturated
+    # (":free" pools often are), OpenRouter tries these in order.
+    openrouter_fallback_models: list[str] = Field(default_factory=list)
     openrouter_api_key_env: str = "OPENROUTER_API_KEY"
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
     reasoning: bool = True   # send {"reasoning": {"enabled": true}} (OpenRouter)

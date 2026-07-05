@@ -96,7 +96,8 @@ class OpenRouterProvider:
 
     def __init__(self, api_key: str, model: str = "google/gemma-4-31b-it:free",
                  base_url: str = "https://openrouter.ai/api/v1",
-                 timeout: float = 60.0, reasoning: bool = True) -> None:
+                 timeout: float = 60.0, reasoning: bool = True,
+                 fallback_models: list[str] | None = None) -> None:
         from openai import (
             APIConnectionError,
             APIStatusError,
@@ -111,6 +112,7 @@ class OpenRouterProvider:
                                        "X-Title": "Multi-Agent Town Story Simulator",
                                    })
         self._model = model
+        self._fallback_models = list(fallback_models or [])
         self._reasoning = reasoning
         self._transient = (RateLimitError, APITimeoutError, APIConnectionError)
         self._status_error = APIStatusError
@@ -123,7 +125,14 @@ class OpenRouterProvider:
         return exc
 
     async def complete(self, prompt: str, *, max_tokens: int, temperature: float) -> str:
-        extra_body = {"reasoning": {"enabled": True}} if self._reasoning else {}
+        extra_body: dict = {}
+        if self._reasoning:
+            extra_body["reasoning"] = {"enabled": True}
+        if self._fallback_models:
+            # OpenRouter routes to the first available model in this list
+            # when earlier ones are saturated/erroring. The API caps the
+            # array at 3 items total.
+            extra_body["models"] = [self._model, *self._fallback_models][:3]
         try:
             rsp = await self._client.chat.completions.create(
                 model=self._model,
@@ -213,7 +222,8 @@ def build_provider(cfg) -> LLMProvider:
                 f"LLM provider 'openrouter' selected but {cfg.openrouter_api_key_env} is not set")
         return OpenRouterProvider(api_key=api_key, model=cfg.openrouter_model,
                                   base_url=cfg.openrouter_base_url,
-                                  timeout=cfg.request_timeout_s, reasoning=cfg.reasoning)
+                                  timeout=cfg.request_timeout_s, reasoning=cfg.reasoning,
+                                  fallback_models=cfg.openrouter_fallback_models)
     if provider == "fake":
         return FakeProvider()
     raise ValueError(f"unknown LLM provider: {provider!r}")

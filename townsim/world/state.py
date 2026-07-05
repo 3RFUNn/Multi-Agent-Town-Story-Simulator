@@ -34,6 +34,7 @@ class WorldState:
     conversations: dict[str, Conversation] = field(default_factory=dict)
     reservations: dict[Coord, str] = field(default_factory=dict)   # target cell -> agent id
     conversation_requests: list[tuple[str, str]] = field(default_factory=list)
+    today_pairs: set[frozenset] = field(default_factory=set)       # pairs who talked today
     stories: list[dict] = field(default_factory=list)
     _conversation_seq: int = 0
 

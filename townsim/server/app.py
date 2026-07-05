@@ -39,11 +39,21 @@ def create_app(cfg: SimConfig | None = None) -> FastAPI:
     hub = WsHub()
     stop_event = asyncio.Event()
 
+    def _observe_sim_task(task: asyncio.Task) -> None:
+        """R14: a crashed simulation must be loud, not a frozen dashboard."""
+        if task.cancelled():
+            return
+        exc = task.exception()
+        if exc is not None:
+            log.error("SIMULATION CRASHED — dashboard is now frozen",
+                      error=repr(exc), exc_info=exc)
+
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         narrative.start()
         sim_task = asyncio.create_task(
             run_kernel(kernel, on_tick=hub.on_tick, stop_event=stop_event))
+        sim_task.add_done_callback(_observe_sim_task)
         log.info("simulation started", provider=provider.name,
                  seed=cfg.kernel.seed, run_dir=str(kernel.run_dir))
         yield
@@ -53,6 +63,7 @@ def create_app(cfg: SimConfig | None = None) -> FastAPI:
         except asyncio.TimeoutError:
             sim_task.cancel()
         await narrative.stop()
+        kernel.flush_intents()   # R13: results completed during stop() still land
 
     app = FastAPI(title="Town Simulator V2", lifespan=lifespan)
     app.state.kernel = kernel
@@ -113,6 +124,8 @@ def create_app(cfg: SimConfig | None = None) -> FastAPI:
                     kernel.paused = False
                     await hub.broadcast_paused(False)
         except WebSocketDisconnect:
-            await hub.disconnect(ws)
+            pass
+        finally:
+            await hub.disconnect(ws)   # R23: no leaks on ANY exit path
 
     return app

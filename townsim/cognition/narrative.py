@@ -78,7 +78,7 @@ class NarrativeCoordinator:
 
     # ---- kernel-facing (synchronous; called at day rollover) --------------
     def on_day_end(self, world, prev_day_index: int, weekday: str,
-                   day_events: list[Event]) -> None:
+                   day_events: list[Event], now_tick: int = 0) -> None:
         day_number = prev_day_index + 1
         beats = detect_beats(world, day_events)
         agents = world.agents_sorted()
@@ -98,8 +98,9 @@ class NarrativeCoordinator:
             self.queue.put_nowait(Job("diary", prev_day_index, agent.id, diary_prompt,
                                       meta={"name": agent.spec.name}))
 
-            top = sorted(agent.memory.for_day(prev_day_index),
-                         key=lambda e: e.importance, reverse=True)[:12]
+            # Scored retrieval (recency x importance; relevance when
+            # embeddings are present) picks what the agent reflects on (R21).
+            top = agent.memory.retrieve(None, now_tick, k=self.cfg.memory.retrieve_k)
             reflect_prompt = self.prompts.render(
                 "reflect_v1.j2",
                 name=agent.spec.name, personality=", ".join(agent.spec.personality),
@@ -166,7 +167,9 @@ class NarrativeCoordinator:
                                         "weekday": job.meta["weekday"],
                                         "day_number": job.meta["day_number"], "text": text}))
         elif job.kind == "dialogue":
-            text = await self.gateway.complete(job.prompt, max_tokens=400, cacheable=True)
+            # Never semantically cached (R11): a near-duplicate prompt for a
+            # DIFFERENT pair would replay the wrong names into their memories.
+            text = await self.gateway.complete(job.prompt, max_tokens=400)
             self.intents.append(Intent("dialogue_ready", job.agent_id,
                                        {"day_index": job.day_index,
                                         "partner": job.meta["partner"], "text": text}))

@@ -38,7 +38,18 @@ class OpenAIProvider:
         self._client = AsyncOpenAI(api_key=api_key, timeout=timeout)
         self._model = model
         self._embed_model = embed_model
-        self._transient = (RateLimitError, APITimeoutError, APIConnectionError, APIStatusError)
+        self._transient = (RateLimitError, APITimeoutError, APIConnectionError)
+        self._status_error = APIStatusError
+
+    def _classify(self, exc: Exception) -> Exception:
+        """R12: only rate limits, timeouts, connection errors, and 5xx are
+        retryable; 4xx client errors (bad key, bad model, ...) must surface
+        immediately instead of burning retries."""
+        if isinstance(exc, self._transient):
+            return TransientLLMError(str(exc))
+        if isinstance(exc, self._status_error) and getattr(exc, "status_code", 0) >= 500:
+            return TransientLLMError(str(exc))
+        return exc
 
     async def complete(self, prompt: str, *, max_tokens: int, temperature: float) -> str:
         try:
@@ -48,8 +59,8 @@ class OpenAIProvider:
                 max_tokens=max_tokens,
                 temperature=temperature,
             )
-        except self._transient as exc:
-            raise TransientLLMError(str(exc)) from exc
+        except Exception as exc:
+            raise self._classify(exc) from exc
         content = rsp.choices[0].message.content
         if not content or not content.strip():
             raise TransientLLMError("empty completion")  # F34: validate output shape
@@ -58,8 +69,8 @@ class OpenAIProvider:
     async def embed(self, text: str) -> list[float]:
         try:
             rsp = await self._client.embeddings.create(model=self._embed_model, input=text)
-        except self._transient as exc:
-            raise TransientLLMError(str(exc)) from exc
+        except Exception as exc:
+            raise self._classify(exc) from exc
         return rsp.data[0].embedding
 
 

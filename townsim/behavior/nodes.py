@@ -212,10 +212,26 @@ class ApproachAndChat(Leaf):
             agent.social_target = None
             return Status.FAILURE
 
+        if agent.path_failed:  # couldn't reach them (R06) — give up cleanly
+            agent.path_failed = False
+            agent.social_target = None
+            agent.move_intent = None
+            if agent.state == "moving":
+                agent.state = "idle"
+            return Status.FAILURE
+
         target_id = agent.social_target
         if target_id is not None:
             target = world.agents.get(target_id)
             if target is None or target.state not in ("idle", "moving"):
+                agent.social_target = None
+                agent.move_intent = None
+                if agent.state == "moving":
+                    agent.state = "idle"
+                return Status.FAILURE
+            # Stale-target guard (R08): a preempted chase must not resume
+            # across the map hours later.
+            if world.chebyshev(agent.pos, target.pos) > icfg.approach_radius * 2:
                 agent.social_target = None
                 agent.move_intent = None
                 if agent.state == "moving":

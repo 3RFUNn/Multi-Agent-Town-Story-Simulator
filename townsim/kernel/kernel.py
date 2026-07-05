@@ -11,9 +11,9 @@ import structlog
 from townsim.agents.agent import UTILITY_AXES, AgentState
 from townsim.agents.components import Needs, Relationship, Wallet
 from townsim.agents.schedule import is_in_window
-from townsim.behavior.blackboard import Blackboard
+from townsim.behavior.blackboard import Blackboard, Scope
 from townsim.behavior.trees import build_agent_tree
-from townsim.cognition.memory import MemoryEntry
+from townsim.cognition.memory import MemoryEntry, MemoryStream
 from townsim.cognition.narrative import NarrativeCoordinator
 from townsim.cognition.reflection import ReflectionResult
 from townsim.config.content import AGENTS, RELATIONSHIPS, validate_content
@@ -43,6 +43,12 @@ def build_world(cfg: SimConfig, rng: RngRegistry) -> WorldState:
                         fatigue=init_rng.uniform(5, 20)),
             wallet=Wallet(money=float(init_rng.randint(cfg.economy.starting_money_min,
                                                        cfg.economy.starting_money_max))),
+            memory=MemoryStream(                      # R21: scoring knobs wired
+                alpha_recency=cfg.memory.alpha_recency,
+                beta_importance=cfg.memory.beta_importance,
+                gamma_relevance=cfg.memory.gamma_relevance,
+                decay_per_tick=cfg.memory.recency_decay_per_tick,
+            ),
         )
         for other_id, rel in RELATIONSHIPS.get(spec.id, {}).items():
             agent.relationships[other_id] = Relationship(
@@ -113,12 +119,14 @@ class Kernel:
         # 1) snapshot prompts & enqueue narrative jobs BEFORE any pruning
         if self.narrative is not None:
             self.narrative.on_day_end(self.world, prev.day_index, prev.weekday,
-                                      list(self._day_events))
+                                      list(self._day_events), now_tick=self.tick)
         self._day_events = []
 
         # 2) per-agent daily housekeeping
+        self.world.today_pairs.clear()
         for agent in self.world.agents_sorted():
             agent.daily_dialogues_used = 0
+            self.bb.delete(Scope.AGENT, agent.id, "rest_spot")   # R18: no sticky choices
             agent.wallet.paid_slots = {
                 s for s in agent.wallet.paid_slots if s[0] >= now.day_index - 1}
             agent.schedule_overrides = {
@@ -208,9 +216,11 @@ class Kernel:
 
     def flush_intents(self) -> list[Event]:
         """Apply pending cognition intents outside of step() (end of run),
-        journaling the resulting events."""
+        journaling the resulting events. Events are stamped with the LAST
+        STEPPED tick (R22), not a tick that never ran."""
+        last = max(0, self.tick - 1)
         ctx = SysContext(world=self.world, cfg=self.cfg, bb=self.bb,
-                         rng=self.rng, now=self.clock.at(self.tick))
+                         rng=self.rng, now=self.clock.at(last))
         self._apply_intents(ctx)
         self.journal.extend(ctx.events)
         return ctx.events

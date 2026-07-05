@@ -3,6 +3,32 @@ name = "townsim"
 version = "2.0.0"
 description = "Multi-Agent Town Story Simulator V2 — hybrid BT/utility agents with LLM narrative cognition"
 requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "pydantic>=2.6",
+    "pydantic-settings>=2.2",
+    "PyYAML>=6.0",
+    "jinja2>=3.1",
+    "numpy>=1.26",
+    "structlog>=24.1",
+    "tenacity>=8.2",
+    "openai>=1.30",
+]
+
+[project.scripts]
+townsim = "townsim.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["townsim*"]
+
+[tool.setuptools.package-data]
+"townsim.server" = ["static/*"]
+"townsim.config" = ["*.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -15,11 +15,15 @@ BEHAVIORAL = {
     "sim_started", "day_started", "activity_started", "activity_ended",
     "agent_moved_to", "path_failed", "conversation_started", "conversation_ended",
     "meal_eaten", "rest_taken", "sleep_started", "wage_paid", "cost_paid",
-    "log", "relationship_changed", "schedule_override_applied",
+    "log", "relationship_changed",
 }
-# Narrative/LLM event types (excluded from the determinism hash — their text
-# depends on the provider).
-NARRATIVE = {"diary_written", "story_written", "reflection_applied", "dialogue_rendered"}
+# Narrative/LLM event types (excluded from the determinism hash — their
+# content and, outside strict mode, their timing depend on the provider).
+# schedule_override_applied is here because it derives from reflection (R10);
+# its behavioral CONSEQUENCES are hash-covered and reproducible under
+# strict_narrative_sync, which pins intent application to the rollover tick.
+NARRATIVE = {"diary_written", "story_written", "reflection_applied",
+             "dialogue_rendered", "schedule_override_applied"}
 
 
 @dataclass(frozen=True)

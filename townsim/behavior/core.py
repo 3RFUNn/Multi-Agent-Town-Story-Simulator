@@ -186,8 +186,17 @@ class Branch(Node):
 def guarded_move(name: str, is_there: Callable[[TickContext], bool],
                  do_there: Node, go_there: Node) -> Selector:
     """The location-guard idiom (fixes V1's F05/F11): act only when actually
-    at the target, otherwise travel there."""
+    at the target, otherwise travel there.
+
+    The travel arm is guarded on NOT being there (R01): if the agent is at
+    the location and do_there FAILS (e.g. can't afford it), the whole branch
+    must FAIL so the tree can fall back to lower-priority behaviors — without
+    the guard, GoTo would return SUCCESS on arrival-already and silently
+    swallow the failure."""
     return Selector(name, [
         Sequence(f"{name}: here", [Condition(f"{name}: at location?", is_there), do_there]),
-        go_there,
+        Sequence(f"{name}: travel", [
+            Condition(f"{name}: not there yet?", lambda ctx: not is_there(ctx)),
+            go_there,
+        ]),
     ])

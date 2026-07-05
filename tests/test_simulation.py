@@ -35,19 +35,25 @@ class TestDeterminism:
     def test_same_seed_same_hash(self, cfg):
         k1 = make_kernel(cfg, with_narrative=False)
         k2 = make_kernel(cfg, with_narrative=False)
-        step_days(k1, 1)
-        step_days(k2, 1)
-        assert k1.journal.determinism_hash() == k2.journal.determinism_hash()
-        k1.close(), k2.close()
+        try:  # R26: close journals even on assertion failure (Windows tmp cleanup)
+            step_days(k1, 1)
+            step_days(k2, 1)
+            assert k1.journal.determinism_hash() == k2.journal.determinism_hash()
+        finally:
+            k1.close()
+            k2.close()
 
     def test_different_seed_different_hash(self, cfg):
         k1 = make_kernel(cfg, with_narrative=False)
         cfg.kernel.seed = cfg.kernel.seed + 1
         k2 = make_kernel(cfg, with_narrative=False)
-        step_days(k1, 1)
-        step_days(k2, 1)
-        assert k1.journal.determinism_hash() != k2.journal.determinism_hash()
-        k1.close(), k2.close()
+        try:
+            step_days(k1, 1)
+            step_days(k2, 1)
+            assert k1.journal.determinism_hash() != k2.journal.determinism_hash()
+        finally:
+            k1.close()
+            k2.close()
 
     async def test_strict_mode_full_loop_reproducible(self, cfg):
         hashes = []

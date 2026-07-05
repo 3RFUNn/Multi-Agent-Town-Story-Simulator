@@ -146,8 +146,15 @@ class MovementSystem:
         rng = ctx.rng.stream("movement")
         for agent in ctx.world.agents_sorted():
             if agent.state != "moving":
-                if not agent.move_intent and not agent.path:
-                    ctx.world.release_reservations(agent.id)
+                # A walk abandoned for ANY reason (arrival, preemption into an
+                # action, interaction start) must not hold stale paths or cell
+                # reservations for hours (R05).
+                if agent.path or agent.path_target is not None:
+                    agent.path = []
+                    agent.path_target = None
+                    agent.path_goal_key = None
+                    agent.path_retries = 0
+                ctx.world.release_reservations(agent.id)
                 continue
             intent = agent.move_intent
             if intent is None:
@@ -186,6 +193,7 @@ class MovementSystem:
         self._clear_path(ctx, agent)
         agent.path_failed = True
         agent.path_goal_key = None
+        agent.move_intent = None   # R06: leave no half-armed intent behind
         agent.state = "idle"
         ctx.emit("path_failed", agent_id=agent.id)
 
@@ -295,24 +303,51 @@ class InteractionSystem:
     def _process_requests(self, ctx: SysContext) -> None:
         rng = ctx.rng.stream("interaction")
         requests, ctx.world.conversation_requests = ctx.world.conversation_requests, []
+        handled: set[frozenset] = set()
         for initiator_id, partner_id in requests:
+            pair = frozenset((initiator_id, partner_id))
+            if pair in handled:      # symmetric same-tick request already served
+                continue
             initiator = ctx.world.agents.get(initiator_id)
             partner = ctx.world.agents.get(partner_id)
             if initiator is None or partner is None:
                 continue
+            # R07: an initiator who just entered a conversation this tick was
+            # not rebuffed — drop the request silently.
+            if initiator.state == "interacting":
+                continue
             adjacency = ctx.cfg.interaction.adjacency_max_chebyshev
-            valid = (initiator.state == "idle" and partner.state == "idle"
+            # R17: a partner still WALKING toward the initiator counts as
+            # available — mutual approaches must not rebuff each other.
+            partner_available = (partner.state == "idle"
+                                 or (partner.state == "moving"
+                                     and partner.social_target == initiator_id))
+            valid = (initiator.state == "idle" and partner_available
                      and ctx.world.chebyshev(initiator.pos, partner.pos) <= adjacency)
             if not valid:
                 ctx.bb.set(Scope.AGENT, initiator_id, "social_rebuffed", True)
                 ctx.log(initiator, f"{partner.spec.name} seemed busy, so I let it go.",
                         importance=0.2, participants=(partner_id,))
                 continue
+            handled.add(pair)
+            if partner.state == "moving":
+                ctx.world.release_reservations(partner.id)
+                partner.path = []
+                partner.path_target = None
+                partner.path_goal_key = None
+                partner.path_retries = 0
+                partner.move_intent = None
+                partner.state = "idle"
             duration = rng.randint(ctx.cfg.interaction.conversation_min_ticks,
                                    ctx.cfg.interaction.conversation_max_ticks)
             location = ctx.world.town.place_at(initiator.pos)
-            salient = (initiator.daily_dialogues_used < ctx.cfg.interaction.daily_dialogue_budget
-                       and initiator.relationship_with(partner_id).familiarity < 30)
+            # R03/R19: salient = the pair's first conversation today, within
+            # BOTH participants' daily dialogue budgets.
+            budget = ctx.cfg.interaction.daily_dialogue_budget
+            salient = (pair not in ctx.world.today_pairs
+                       and initiator.daily_dialogues_used < budget
+                       and partner.daily_dialogues_used < budget)
+            ctx.world.today_pairs.add(pair)
             conv = ctx.world.new_conversation(initiator_id, partner_id, duration,
                                               ctx.now.tick, location, salient)
             for me, other in ((initiator, partner), (partner, initiator)):
@@ -362,8 +397,8 @@ class InteractionSystem:
             rel.affinity = min(100.0, rel.affinity + 3.0 * quality)
             rel.familiarity = min(100.0, rel.familiarity + 5.0)
             rel.valence = quality * 2 - 1
-            if me.id == conv.a:
-                me.daily_dialogues_used += 1
+            if conv.salient:   # R19: budget charged to BOTH, and only when
+                me.daily_dialogues_used += 1   # an LLM dialogue is rendered
             other_name = other.spec.name if other else other_id
             ctx.log(me, f"Had a nice talk with {other_name}.",
                     importance=0.45 + 0.2 * quality, participants=(other_id,),

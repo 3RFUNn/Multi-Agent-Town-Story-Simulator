@@ -69,13 +69,18 @@ class MemoryStream:
         scored.sort(key=lambda t: (t[0], t[1]), reverse=True)
         return [e for _, _, e in scored[:k]]
 
+    MAX_LONGTERM = 24   # cap on retained summaries/reflections (R20)
+
     def compact_before(self, day_index: int, summary: MemoryEntry | None) -> int:
-        """Drop episodic entries older than day_index; keep summaries/reflections.
-        Returns the number of entries removed."""
-        keep = [e for e in self.entries
-                if e.day_index >= day_index or e.kind in ("summary", "reflection")]
-        removed = len(self.entries) - len(keep)
-        self.entries = keep
+        """Drop episodic entries older than day_index; keep summaries and
+        reflections, capped at MAX_LONGTERM (oldest dropped first) so long
+        runs stay bounded. Returns the number of entries removed."""
+        events = [e for e in self.entries
+                  if e.day_index >= day_index and e.kind == "event"]
+        longterm = [e for e in self.entries if e.kind in ("summary", "reflection")]
         if summary is not None:
-            self.entries.append(summary)
-        return removed
+            longterm.append(summary)
+        longterm = longterm[-self.MAX_LONGTERM:]
+        removed = len(self.entries) - len(events) - len(longterm) + (1 if summary else 0)
+        self.entries = events + longterm
+        return max(0, removed)

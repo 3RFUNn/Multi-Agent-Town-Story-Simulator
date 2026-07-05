@@ -1,13 +1,21 @@
 """WebSocket hub: broadcasts tick deltas and narrative events to browsers.
 
-The browser is a pure view (V1's F25/F33/F46/F47 class of bugs): it can
-connect, disconnect, and reconnect at any time; the server owns pause state
-and re-sends a full init snapshot on every connect.
+The browser is a pure view: it can connect, disconnect, and reconnect at any
+time; the server owns pause state and re-sends a full init snapshot on every
+connect.
+
+Backpressure isolation (R02): each client gets a bounded queue drained by its
+own sender task. broadcast() only enqueues (never awaits a network write), so
+a slow or stalled browser can never block the simulation tick loop — when a
+client's queue overflows, its oldest frames are dropped (the next tick frame
+supersedes them anyway); a client that stays stalled is eventually
+disconnected by uvicorn's keepalive, which cancels its sender task here.
 """
 from __future__ import annotations
 
 import asyncio
 import json
+from dataclasses import dataclass
 
 import structlog
 from fastapi import WebSocket
@@ -17,22 +25,57 @@ from townsim.kernel.kernel import Kernel
 
 log = structlog.get_logger(__name__)
 
+QUEUE_SIZE = 64
+
+
+@dataclass
+class _Client:
+    ws: WebSocket
+    queue: asyncio.Queue
+    task: asyncio.Task
+
 
 class WsHub:
     def __init__(self) -> None:
-        self._clients: set[WebSocket] = set()
-        self._lock = asyncio.Lock()
+        self._clients: dict[WebSocket, _Client] = {}
 
+    # ---- lifecycle --------------------------------------------------------
     async def connect(self, ws: WebSocket, kernel: Kernel) -> None:
         await ws.accept()
-        async with self._lock:
-            self._clients.add(ws)
-        await self._send(ws, self.init_payload(kernel))
+        queue: asyncio.Queue = asyncio.Queue(maxsize=QUEUE_SIZE)
+        client = _Client(ws=ws, queue=queue, task=asyncio.create_task(self._sender(ws, queue)))
+        self._clients[ws] = client
+        self._enqueue(client, json.dumps(self.init_payload(kernel), ensure_ascii=False))
 
     async def disconnect(self, ws: WebSocket) -> None:
-        async with self._lock:
-            self._clients.discard(ws)
+        client = self._clients.pop(ws, None)
+        if client is not None:
+            client.task.cancel()
 
+    async def _sender(self, ws: WebSocket, queue: asyncio.Queue) -> None:
+        try:
+            while True:
+                payload = await queue.get()
+                await ws.send_text(payload)
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            # Socket died mid-send: unregister; the endpoint's finally block
+            # also calls disconnect, which is idempotent.
+            self._clients.pop(ws, None)
+
+    def _enqueue(self, client: _Client, payload: str) -> None:
+        while True:
+            try:
+                client.queue.put_nowait(payload)
+                return
+            except asyncio.QueueFull:
+                try:
+                    client.queue.get_nowait()   # drop oldest frame
+                except asyncio.QueueEmpty:
+                    pass
+
+    # ---- payloads ---------------------------------------------------------
     def init_payload(self, kernel: Kernel) -> dict:
         now = kernel.now()
         return {
@@ -78,22 +121,10 @@ class WsHub:
         await self.broadcast([{"type": "paused", "value": value}])
 
     async def broadcast(self, messages: list[dict]) -> None:
+        """Enqueue only — never blocks on any client's socket (R02)."""
         if not self._clients:
             return
         payloads = [json.dumps(m, ensure_ascii=False) for m in messages]
-        dead: list[WebSocket] = []
-        async with self._lock:
-            clients = list(self._clients)
-        for ws in clients:
-            try:
-                for payload in payloads:
-                    await ws.send_text(payload)
-            except Exception:
-                dead.append(ws)
-        if dead:
-            async with self._lock:
-                for ws in dead:
-                    self._clients.discard(ws)
-
-    async def _send(self, ws: WebSocket, message: dict) -> None:
-        await ws.send_text(json.dumps(message, ensure_ascii=False))
+        for client in list(self._clients.values()):
+            for payload in payloads:
+                self._enqueue(client, payload)

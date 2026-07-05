@@ -45,12 +45,16 @@ def scheduled_activity(agent: AgentState, now: SimTime) -> str | None:
 
 def slot_for(agent: AgentState, now: SimTime, activity: str) -> tuple[int, int]:
     """The (start_hour, end_hour) window that produced `activity` right now.
-    Used for charge-once-per-slot accounting (F13) and action end times."""
-    if activity == "sleep_at_home":
-        return agent.spec.sleep_window
+    Used for charge-once-per-slot accounting (F13) and action end times.
+
+    Overrides are checked BEFORE the sleep special-case (R09): a
+    reflection-proposed afternoon nap must end at the override's end hour,
+    not stretch to the agent's whole nightly sleep window."""
     for (day_index, start, end), a in agent.schedule_overrides.items():
         if day_index == now.day_index and a == activity and is_in_window(now.hour, start, end):
             return (start, end)
+    if activity == "sleep_at_home":
+        return agent.spec.sleep_window
     template = SCHEDULE_TEMPLATES[agent.spec.schedule_template]
     day_kind = "weekends" if now.weekday in ("Saturday", "Sunday") else "weekdays"
     for (start, end), a in template.get(day_kind, {}).items():

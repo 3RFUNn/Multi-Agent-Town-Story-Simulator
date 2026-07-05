@@ -117,16 +117,29 @@ class SimConfig(BaseSettings):
     paths: PathsConfig = Field(default_factory=PathsConfig)
     server: ServerConfig = Field(default_factory=ServerConfig)
 
+    @classmethod
+    def settings_customise_sources(cls, settings_cls, init_settings, env_settings,
+                                   dotenv_settings, file_secret_settings):
+        # R15: YAML values arrive as init kwargs; environment variables must
+        # still override them (env > yaml > defaults).
+        return (env_settings, init_settings, dotenv_settings, file_secret_settings)
+
 
 def load_config(yaml_path: str | Path | None = None) -> SimConfig:
-    """YAML file (if given/found) provides defaults; env vars override."""
-    candidates = [Path(yaml_path)] if yaml_path else [
-        PROJECT_ROOT / "townsim.yaml",
-        Path(__file__).with_name("default.yaml"),
-    ]
+    """Precedence: env vars > YAML file > built-in defaults. An explicitly
+    given yaml_path that does not exist is an error (R24), never silently
+    ignored."""
+    if yaml_path is not None:
+        explicit = Path(yaml_path)
+        if not explicit.exists():
+            raise FileNotFoundError(f"config file not found: {explicit}")
+        candidates = [explicit]
+    else:
+        candidates = [PROJECT_ROOT / "townsim.yaml",
+                      Path(__file__).with_name("default.yaml")]
     data: dict = {}
     for candidate in candidates:
-        if candidate and candidate.exists():
+        if candidate.exists():
             with open(candidate, encoding="utf-8") as f:
                 data = yaml.safe_load(f) or {}
             break

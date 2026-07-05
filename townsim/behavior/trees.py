@@ -73,6 +73,15 @@ def build_agent_tree(agent_id: str) -> Node:
         ),
     ])
 
+    # Social/leisure slots (socialize_at_park, ...) must NOT freeze the agent
+    # in doing_action for the whole window (R04): the schedule branch walks
+    # them to the venue, then deliberately FAILS there so the free-time
+    # utility layer (socializing, conversations, idling) takes over on site.
+    def _is_timed_activity(ctx: TickContext) -> bool:
+        activity = ctx.agent.current_activity
+        return (activity is not None
+                and ACTIVITY_DATA[activity]["kind"] not in ("social", "leisure"))
+
     schedule_branch = Branch(
         "Follow my schedule",
         Sequence("scheduled activity", [
@@ -80,7 +89,10 @@ def build_agent_tree(agent_id: str) -> Node:
             guarded_move(
                 "do scheduled activity",
                 is_there=lambda ctx: ctx.world.is_at_place(ctx.agent, _activity_place(ctx)),
-                do_there=StartScheduledActivity("start activity"),
+                do_there=Sequence("start timed activity", [
+                    Condition("timed activity?", _is_timed_activity),
+                    StartScheduledActivity("start activity"),
+                ]),
                 go_there=GoTo("walk to activity", _activity_place, reason="schedule"),
             ),
         ]),

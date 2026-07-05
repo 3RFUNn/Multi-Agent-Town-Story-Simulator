@@ -32,6 +32,8 @@ def create_app(cfg: SimConfig | None = None) -> FastAPI:
     provider = build_provider(cfg.llm)
     gateway = LLMGateway(provider, max_concurrency=cfg.llm.max_concurrency,
                          max_attempts=cfg.llm.max_attempts,
+                         retry_max_wait_s=cfg.llm.retry_max_wait_s,
+                         requests_per_minute=cfg.llm.requests_per_minute,
                          cache=SemanticCache(threshold=cfg.llm.semantic_cache_threshold))
     prompts = PromptLibrary(cfg.paths.prompts_dir)
     narrative = NarrativeCoordinator(gateway, prompts, cfg)

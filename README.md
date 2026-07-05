@@ -30,14 +30,29 @@ python -m townsim run --days 3 --fast
 python -m townsim replay runs/run_<stamp>_seed42/journal.jsonl
 ```
 
-**No API key needed to try it.** Without a key, the system uses a deterministic offline provider (`fake`) that grounds its text in the real event journal. For real narratives, set an OpenAI key and the provider resolves automatically:
+**No API key needed to try it.** Without a key, the system uses a deterministic offline provider (`fake`) that grounds its text in the real event journal. For real narratives, add a key to a `.env` file at the repo root — either provider works:
 
 ```bash
-# .env or environment
+# .env  (gitignored — never commit keys)
+OPENROUTER_API_KEY=sk-or-v1-...   # any openrouter.ai model, incl. free ones
+# or
 OPENAI_API_KEY=sk-...             # (the V1 name API_KEY also still works)
 ```
 
-Configuration lives in [`townsim/config/default.yaml`](townsim/config/default.yaml) — copy to `townsim.yaml` at the repo root to customize, or override any key via environment (`TOWNSIM_KERNEL__SEED=7`, `TOWNSIM_LLM__PROVIDER=fake`, …). All tuning constants (needs rates, wages, thresholds, tick scale) are config, not magic numbers.
+With `provider: auto` the first available key wins (OpenAI, then OpenRouter, then offline). For OpenRouter free-tier models, create a `townsim.yaml` at the repo root (gitignored) to pin the provider and pace requests under the 16-req/min quota:
+
+```yaml
+llm:
+  provider: openrouter
+  openrouter_model: google/gemma-4-31b-it:free
+  reasoning: true            # OpenRouter reasoning flag
+  requests_per_minute: 12    # client-side pacing below the :free quota
+  max_attempts: 6
+  retry_max_wait_s: 70       # retries can ride out a full quota window
+  narrative_drain_timeout_s: 600
+```
+
+Configuration defaults live in [`townsim/config/default.yaml`](townsim/config/default.yaml); any key can also be overridden via environment (`TOWNSIM_KERNEL__SEED=7`, `TOWNSIM_LLM__PROVIDER=fake`, …). All tuning constants (needs rates, wages, thresholds, tick scale) are config, not magic numbers.
 
 ### Reproducibility
 

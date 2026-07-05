@@ -69,6 +69,8 @@ def cmd_run(args) -> int:
         provider = build_provider(cfg.llm)
         gateway = LLMGateway(provider, max_concurrency=cfg.llm.max_concurrency,
                              max_attempts=cfg.llm.max_attempts,
+                             retry_max_wait_s=cfg.llm.retry_max_wait_s,
+                             requests_per_minute=cfg.llm.requests_per_minute,
                              cache=SemanticCache(cfg.llm.semantic_cache_threshold))
         narrative = NarrativeCoordinator(gateway, PromptLibrary(cfg.paths.prompts_dir), cfg)
         kernel = Kernel(cfg, narrative=narrative)
@@ -114,14 +116,14 @@ def main(argv: list[str] | None = None) -> int:
 
     p_serve = sub.add_parser("serve", help="run the simulation with the web dashboard")
     p_serve.add_argument("--seed", type=int, default=None)
-    p_serve.add_argument("--provider", choices=["auto", "openai", "fake"], default=None)
+    p_serve.add_argument("--provider", choices=["auto", "openai", "openrouter", "fake"], default=None)
     p_serve.set_defaults(func=cmd_serve)
 
     p_run = sub.add_parser("run", help="headless simulation run")
     p_run.add_argument("--days", type=int, default=1)
     p_run.add_argument("--seed", type=int, default=None)
     p_run.add_argument("--fast", action="store_true", help="no wall-clock pacing")
-    p_run.add_argument("--provider", choices=["auto", "openai", "fake"], default=None)
+    p_run.add_argument("--provider", choices=["auto", "openai", "openrouter", "fake"], default=None)
     p_run.add_argument("--strict", dest="strict", action="store_true", default=True,
                        help="settle narrative at day rollovers for bit-exact replays (default)")
     p_run.add_argument("--no-strict", dest="strict", action="store_false")

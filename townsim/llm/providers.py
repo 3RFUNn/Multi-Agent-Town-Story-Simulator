@@ -74,6 +74,74 @@ class OpenAIProvider:
         return rsp.data[0].embedding
 
 
+class OpenRouterProvider:
+    """OpenRouter (openrouter.ai) — OpenAI-compatible chat completions with
+    any hosted model (e.g. google/gemma-4-31b-it:free).
+
+    Notes:
+    - `reasoning={"enabled": true}` is passed via extra_body per the
+      OpenRouter API; models that don't support it simply ignore it.
+      townsim's calls are single-turn, so the multi-turn reasoning_details
+      pass-back from the OpenRouter docs does not apply here.
+    - OpenRouter has no embeddings endpoint, so embed() returns local
+      deterministic hash vectors (same scheme as FakeProvider) — enough for
+      the semantic cache and retrieval to keep functioning.
+    """
+
+    name = "openrouter"
+    EMBED_DIM = 32
+
+    def __init__(self, api_key: str, model: str = "google/gemma-4-31b-it:free",
+                 base_url: str = "https://openrouter.ai/api/v1",
+                 timeout: float = 60.0, reasoning: bool = True) -> None:
+        from openai import (
+            APIConnectionError,
+            APIStatusError,
+            APITimeoutError,
+            AsyncOpenAI,
+            RateLimitError,
+        )
+        self._client = AsyncOpenAI(api_key=api_key, base_url=base_url, timeout=timeout,
+                                   default_headers={
+                                       "HTTP-Referer": "https://github.com/3RFUNn/Multi-Agent-Town-Story-Simulator",
+                                       "X-Title": "Multi-Agent Town Story Simulator",
+                                   })
+        self._model = model
+        self._reasoning = reasoning
+        self._transient = (RateLimitError, APITimeoutError, APIConnectionError)
+        self._status_error = APIStatusError
+
+    def _classify(self, exc: Exception) -> Exception:
+        if isinstance(exc, self._transient):
+            return TransientLLMError(str(exc))
+        if isinstance(exc, self._status_error) and getattr(exc, "status_code", 0) >= 500:
+            return TransientLLMError(str(exc))
+        return exc
+
+    async def complete(self, prompt: str, *, max_tokens: int, temperature: float) -> str:
+        extra_body = {"reasoning": {"enabled": True}} if self._reasoning else {}
+        try:
+            rsp = await self._client.chat.completions.create(
+                model=self._model,
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=max_tokens,
+                temperature=temperature,
+                extra_body=extra_body,
+            )
+        except Exception as exc:
+            raise self._classify(exc) from exc
+        if not rsp.choices:
+            raise TransientLLMError("no choices in response")
+        content = rsp.choices[0].message.content
+        if not content or not content.strip():
+            raise TransientLLMError("empty completion")
+        return content
+
+    async def embed(self, text: str) -> list[float]:
+        digest = hashlib.sha256(text.encode("utf-8")).digest()
+        return [(b - 127.5) / 127.5 for b in digest[: self.EMBED_DIM]]
+
+
 class FakeProvider:
     """Deterministic offline provider. Diary/story output is synthesized from
     the prompt's own bullet lines, so narratives remain grounded in the
@@ -127,13 +195,21 @@ def build_provider(cfg) -> LLMProvider:
     """cfg: townsim.config.models.LLMConfig"""
     provider = cfg.resolve_provider()
     if provider == "openai":
-        api_key = cfg.resolve_api_key()
+        api_key = cfg.resolve_api_key("openai")
         if not api_key:
             raise RuntimeError(
                 f"LLM provider 'openai' selected but neither {cfg.api_key_env} nor "
                 f"{cfg.legacy_api_key_env} is set")
         return OpenAIProvider(api_key=api_key, model=cfg.model,
                               embed_model=cfg.embed_model, timeout=cfg.request_timeout_s)
+    if provider == "openrouter":
+        api_key = cfg.resolve_api_key("openrouter")
+        if not api_key:
+            raise RuntimeError(
+                f"LLM provider 'openrouter' selected but {cfg.openrouter_api_key_env} is not set")
+        return OpenRouterProvider(api_key=api_key, model=cfg.openrouter_model,
+                                  base_url=cfg.openrouter_base_url,
+                                  timeout=cfg.request_timeout_s, reasoning=cfg.reasoning)
     if provider == "fake":
         return FakeProvider()
     raise ValueError(f"unknown LLM provider: {provider!r}")

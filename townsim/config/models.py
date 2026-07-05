@@ -16,27 +16,49 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
+# API keys live in a gitignored .env at the project root (V1 convention).
+try:
+    from dotenv import load_dotenv
+    load_dotenv(PROJECT_ROOT / ".env")
+except ImportError:  # pragma: no cover — optional convenience
+    pass
+
 
 class LLMConfig(BaseModel):
-    provider: str = "auto"  # auto | openai | fake
+    provider: str = "auto"  # auto | openai | openrouter | fake
     model: str = "gpt-4.1-mini"
     embed_model: str = "text-embedding-3-small"
     api_key_env: str = "OPENAI_API_KEY"
     legacy_api_key_env: str = "API_KEY"  # V1 used this name; honored with a warning
+    # OpenRouter (OpenAI-compatible endpoint; any openrouter.ai model id)
+    openrouter_model: str = "google/gemma-4-31b-it:free"
+    openrouter_api_key_env: str = "OPENROUTER_API_KEY"
+    openrouter_base_url: str = "https://openrouter.ai/api/v1"
+    reasoning: bool = True   # send {"reasoning": {"enabled": true}} (OpenRouter)
     request_timeout_s: float = 60.0
     max_concurrency: int = 4
     max_attempts: int = 4
+    retry_max_wait_s: float = 30.0       # cap on exponential backoff between retries
+    requests_per_minute: float = 0       # client-side pacing; 0 = unlimited
+    narrative_drain_timeout_s: float = 120.0
     diary_max_tokens: int = 1024
     story_max_tokens: int = 1536
     semantic_cache_threshold: float = 0.97
 
-    def resolve_api_key(self) -> str | None:
+    def resolve_api_key(self, provider: str | None = None) -> str | None:
+        provider = provider or self.resolve_provider()
+        if provider == "openrouter":
+            return os.getenv(self.openrouter_api_key_env)
         return os.getenv(self.api_key_env) or os.getenv(self.legacy_api_key_env)
 
     def resolve_provider(self) -> str:
         if self.provider != "auto":
             return self.provider
-        return "openai" if self.resolve_api_key() else "fake"
+        if os.getenv(self.api_key_env) or os.getenv(self.legacy_api_key_env):
+            return "openai"
+        if os.getenv(self.openrouter_api_key_env):
+            return "openrouter"
+        return "fake"
 
 
 class NeedsConfig(BaseModel):

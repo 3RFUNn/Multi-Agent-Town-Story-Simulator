@@ -8,8 +8,12 @@ kernel:
   day_start_hour: 8
 
 llm:
-  provider: auto        # auto -> openai if OPENAI_API_KEY (or legacy API_KEY) is set, else fake
-  model: gpt-4.1-mini
+  provider: auto        # auto -> openai if OPENAI_API_KEY/API_KEY is set,
+                        #         else openrouter if OPENROUTER_API_KEY is set,
+                        #         else fake (offline deterministic)
+  model: gpt-4.1-mini                          # used by provider: openai
+  openrouter_model: google/gemma-4-31b-it:free # used by provider: openrouter
+  reasoning: true                              # OpenRouter reasoning flag
 
 needs:
   hunger_critical: 85

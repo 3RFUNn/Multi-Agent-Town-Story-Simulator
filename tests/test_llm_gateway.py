@@ -93,6 +93,27 @@ class TestSemanticCache:
         assert gateway.stats["cache_hits"] == 1
 
 
+class TestPacing:
+    async def test_requests_are_spaced_by_rpm(self):
+        import time
+        provider = FakeProvider()
+        gateway = LLMGateway(provider, requests_per_minute=600)  # 0.1s interval
+        start = time.perf_counter()
+        await gateway.complete("a")
+        await gateway.complete("b")
+        await gateway.complete("c")
+        elapsed = time.perf_counter() - start
+        assert elapsed >= 0.19, f"3 calls at 600rpm must span >=0.2s, took {elapsed:.3f}s"
+
+    async def test_no_pacing_by_default(self):
+        import time
+        gateway = LLMGateway(FakeProvider())
+        start = time.perf_counter()
+        for _ in range(5):
+            await gateway.complete("x")
+        assert time.perf_counter() - start < 0.5
+
+
 class TestFakeProvider:
     async def test_deterministic(self):
         provider = FakeProvider()

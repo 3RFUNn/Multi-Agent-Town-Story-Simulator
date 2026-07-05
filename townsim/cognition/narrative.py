@@ -63,14 +63,18 @@ class NarrativeCoordinator:
             self._tasks.append(asyncio.create_task(self._worker(i)))
 
     async def stop(self) -> None:
-        await self.drain(timeout=90)
+        await self.drain()
         for task in self._tasks:
             task.cancel()
         self._tasks.clear()
 
-    async def drain(self, timeout: float = 90) -> None:
+    async def drain(self, timeout: float | None = None) -> None:
         """Wait for queued narrative work to finish (used at shutdown /
-        end of a headless run so the last day's story is not lost)."""
+        end of a headless run so the last day's story is not lost). The
+        default timeout is configurable — slow rate-limited providers
+        (free tiers) need minutes, not seconds."""
+        if timeout is None:
+            timeout = self.cfg.llm.narrative_drain_timeout_s
         try:
             await asyncio.wait_for(self.queue.join(), timeout=timeout)
         except asyncio.TimeoutError:

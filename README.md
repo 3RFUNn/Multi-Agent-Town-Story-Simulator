@@ -21,6 +21,8 @@ python -m venv .venv
 pip install -r requirements.txt
 
 # Run with the live dashboard at http://127.0.0.1:8000
+# (works with or without the venv activated — `python -m townsim` finds
+#  <repo>/.venv automatically and re-launches inside it when needed)
 python -m townsim serve
 
 # Headless research run: 3 simulated days, no wall-clock pacing

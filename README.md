@@ -24,6 +24,7 @@ This project presents a hybrid architectural approach for emergent narrative gen
 | Customization | [Customization](#customization) |
 | Applications | [Applications](#applications) |
 | Results and Analysis | [Results and Analysis](#results-and-analysis) |
+| Known Limitations | [Known Limitations](#known-limitations) |
 | Discussion and Future Work | [Discussion and Future Work](#discussion-and-future-work) |
 | References | [References](#references) |
 | License | [License](#license) |
@@ -46,7 +47,7 @@ This project models a vibrant small town populated by generative agents, each wi
 - **Multi-Agent Simulation**: Agents with distinct personalities, needs, and relationships.
 - **Behavior Trees**: Decision-making logic for agent actions (work, socialize, rest, eat, etc.).
 - **Daily Diaries & Town Stories**: Each agent writes a diary entry; a daily story is generated from all diaries using an LLM (OpenAI API).
-- **Web Visualization**: Interactive frontend (HTML/CSS/JS) to observe agent activities, town events, and inspect agents/locations. Includes agent roster, needs bars, daily story panel, and simulation log.
+- **Web Visualization**: Interactive frontend (HTML/CSS/JS) to observe agent activities, town events, and inspect agents/locations. Includes agent roster, needs bars, and simulation log (daily stories are saved to files; see [Known Limitations](#known-limitations)).
 - **Pause/Resume Simulation**: Control simulation flow from the UI.
 - **Comprehensive Narrative Analysis**: Advanced NLP-based analysis including:
   - Diary-story similarity analysis using TF-IDF and cosine similarity
@@ -58,8 +59,8 @@ This project models a vibrant small town populated by generative agents, each wi
   - Statistical reporting with visualizations
 - **Customizable Agents, Behaviors, and Towns**: Easily add new agents, behaviors, and map layouts.
 - **API Key via .env**: OpenAI API key can be set in `.env` for secure access.
-- **Robustness**: LLM output does not affect agent behavior, ensuring simulation stability.
-- **Scalability**: Architecture supports expansion to larger simulations and more complex narrative analysis.
+- **Separation of Concerns**: LLM output never feeds back into agent behavior; the behavior trees decide every action, and the LLM only writes about them afterwards.
+- **Extensibility**: Agents, behaviors, map, and prompts live in separate files (see [Customization](#customization)).
 
 ## Project Structure
 
@@ -80,13 +81,13 @@ README.md               # Project documentation
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/yourusername/Final-Project.git
-   cd Final-Project
+   git clone https://github.com/3RFUNn/Multi-Agent-Town-Story-Simulator.git
+   cd Multi-Agent-Town-Story-Simulator
    ```
 
 2. **Install Python dependencies**:
    ```bash
-   pip install flask flask-socketio python-dotenv
+   pip install flask flask-socketio python-dotenv requests
    pip install pandas matplotlib seaborn scikit-learn textblob networkx numpy
    python -m textblob.download_corpora
    ```
@@ -137,37 +138,38 @@ The overall architecture is best understood as a pipeline. In the first stage, a
 
 ### Core Simulation Loop
 
-The heart of the system is the simulation loop, which is managed by the Manager class in `simulation/manager.py`. The simulation progresses in discrete, time-based "ticks". During each tick, the run_simulation method iterates through every active agent, updating its internal state and executing its Behavior Tree.
+The heart of the system is the simulation loop. `run_simulation()` in `command.py` calls `AgentManager.tick()` (`simulation/manager.py`) every 0.4 seconds, and each tick advances the town clock by two minutes. During each tick, the manager updates the agents' schedules and needs, then executes each agent's Behavior Tree, visiting the agents in a shuffled order.
 
-The Manager class is also responsible for handling environmental logic, such as agent movement. A pathfinding algorithm, specifically a Breadth-First Search (`find_path_bfs`), is used to determine the optimal route for an agent to travel between two locations. This ensures that agent movement is logical and physically plausible within the simulated town. The core loop's responsibility is to maintain the integrity of the game state, which is the foundational "truth" that the narrative system will later interpret.
+The AgentManager is also responsible for handling environmental logic, such as agent movement. A pathfinding algorithm, specifically a Breadth-First Search (`find_path_bfs`), is used to determine the shortest route for an agent to travel between two locations. This ensures that agent movement is logical and physically plausible within the simulated town. The core loop's responsibility is to maintain the integrity of the game state, which is the foundational "truth" that the narrative system will later interpret.
 
 ### Agent Design and State
 
-Agent properties and state are defined in `simulation/entities.py` and configured in `simulation/config.py`. Each agent is instantiated with a core set of attributes that form its identity and drive its behavior. These include a unique name, its current_location, and key behavioral flags like has_item. A crucial component of each agent is its AgentMemoryStream, a data structure that records all of its personal observations, state changes, and interactions. This detailed log serves as the primary input for the LLM when generating individual agent diaries.
+Agent properties and state are defined in `simulation/entities.py` and configured in `simulation/config.py`. Each agent is instantiated with a core set of attributes that form its identity and drive its behavior. These include a unique name, personality traits, a weekly schedule template, a work location, relationships, needs (hunger, social, energy), and money. A crucial component of each agent is its AgentMemoryStream, a data structure that records all of its personal observations, state changes, and interactions. This detailed log serves as the primary input for the LLM when generating individual agent diaries.
 
 ### Behavioral Control: Behavior Trees
 
 The moment-to-moment decision-making of each agent is governed by a Behavior Tree, implemented primarily in `behavior/behavior_tree.py` and `behavior/agent_behaviors.py`.
 
-The BT is composed of several custom behavior nodes, such as QueryRAG, FollowPath, and ExploreAction, all of which inherit from py_trees.behaviour.Behaviour. These nodes represent the atomic actions that an agent can perform. For example, FollowPath is responsible for moving an agent along a predefined route, while PickUpItem handles the logical state change of an agent acquiring an item.
+The BT framework is written from scratch rather than taken from a library: `behavior/behavior_tree.py` defines the `Node` base class and the `Selector`, `Sequence`, and `StatefulSelector` composites, and every node returns SUCCESS, FAILURE, or RUNNING. `behavior/agent_behaviors.py` defines the condition and action nodes, such as `IsScheduledActivity`, `HasEnoughMoney`, `PlanPathToActivityLocation`, `ExecuteActivity`, and `FindAgentToTalkTo`, and `create_agent_bt()` assembles one tree per agent.
 
-The tree structure itself is managed by composite nodes. The top-level root node is a Selector, which prioritizes sequences of actions based on the agent's current state. For instance, it may prioritize a Deliver sequence if the agent possesses an item or a PickUp sequence if it does not.
+The top-level root node is a Selector that checks the agent's needs in priority order: go home when exhausted (energy need of 95 or more), rest when tired (70 or more), and find food when starving (hunger need of 85 or more). Only when none of these applies does it fall through to the agent's daily routine.
 
-A key element of this architecture is the StatefulSelector, a custom implementation within `behavior/behavior_tree.py`. Unlike a simple Selector that relies on a fixed left-to-right priority, the StatefulSelector uses a heuristic function to make a more intelligent decision about which child sequence to execute. This design choice, inspired by hybrid BT/planner models, allows for more nuanced, dynamic decision-making without sacrificing the stability and predictable execution of the BT framework.
+A key element of this architecture is the StatefulSelector, a custom implementation within `behavior/behavior_tree.py`. It runs the daily routine (following the schedule or taking free time) and, within free time, the choice between socializing and idling. Unlike a plain Selector, it scores each child with a one-step lookahead (the predicted change in needs and money, with hunger and energy weighted 1.5×) and then commits to the chosen branch until it succeeds or fails, instead of re-deciding every tick. Children with equal scores keep their left-to-right order. The design is inspired by hybrid BT/planner models (Hilburn, *Game AI Pro*).
 
 ### Narrative Generation System
 
 The narrative generation system is a separate, post-hoc process that operates on the output of the simulation. This process is managed by the NarrativeSystem class in `simulation/narrative/narrative_system.py`, with all LLM communication handled by the LLMHandler in `simulation/llm_handler.py`.
 
 The workflow is as follows:
-- After a set period of simulation (e.g., a full day), the NarrativeSystem gathers the AgentMemoryStream from each agent. This raw log is a factual, objective record of every action, observation, and state change.
+- At 3 AM game time, the NarrativeSystem gathers each agent's memories of the previous day from its AgentMemoryStream. This log is a factual record of the agent's actions, observations, and interactions.
 - The system composes a prompt using the agent's core personality traits and the raw log of its actions. The LLM is then tasked with generating a first-person, diary-style narrative for that agent.
 - Once individual diary entries have been generated for all agents, the system crafts a new prompt. This prompt combines all the individual diary entries and instructs the LLM to synthesize them into a single, cohesive, third-person story for the entire town.
-- The system uses a gpt-4.1-mini model for its generative capabilities, but the architecture of the LLMHandler is designed to be model-agnostic, allowing for the easy interchange of different language models.
+- Diaries and stories are saved under `simulation/narrative/daily_stories/day_N/`.
+- The LLMHandler calls OpenAI's Chat Completions API over HTTP, with gpt-4.1-mini as the default model. The model name is a constructor argument, so other OpenAI models drop in; another provider would need its own handler.
 
 ### System Integration
 
-The complete system is a full-stack application. The core simulation and narrative generation logic are contained in the Python backend, built with the Flask framework (`app.py`). Real-time state updates from the backend are communicated to a JavaScript frontend (`static/` directory) via Socket.IO. This frontend provides a visual representation of the agents and their movements within the town, allowing for real-time observation of the BT-controlled behaviors. User commands and interactions are processed via `command.py`.
+The system runs as two Python processes. `app.py` is a Flask and Flask-SocketIO server that serves the frontend (`static/`) and relays events. `command.py` is the simulation runner: it connects to that server as a Socket.IO client, runs the simulation loop, sends a state update after every tick, and listens for the pause and resume commands sent from the browser. The JavaScript frontend shows the agents and their movements within the town in real time, allowing live observation of the BT-controlled behaviors.
 
 ## How It Works
 
@@ -176,7 +178,7 @@ The complete system is a full-stack application. The core simulation and narrati
 - **Simulation Engine**: Managed by `simulation/manager.py`, which updates agent states, schedules, and interactions.
 - **Memory & Diaries**: Agents record experiences in memory streams (`simulation/memory/memory.py`). Diaries are generated daily using prompts and the LLM (`simulation/narrative/narrative_system.py`).
 - **Town Story**: At the end of each day, agent diaries are compiled into a town-wide story using the LLM.
-- **Frontend**: `static/index.html`, `static/script.js`, and `static/style.css` provide a real-time visualization of the town and agents, including agent selection, needs bars, daily story panel, and simulation log.
+- **Frontend**: `static/index.html`, `static/script.js`, and `static/style.css` provide a real-time visualization of the town and agents, including agent selection, needs bars, and simulation log.
 - **Narrative Analysis**: `narrative_analyzer.py` uses NLP to compare agent logs and the daily story, visualizing semantic similarity and content overlap.
 - **API Key Management**: Uses `python-dotenv` to load API keys from `.env`.
 
@@ -188,7 +190,7 @@ The `narrative_analyzer.py` module provides a sophisticated analysis toolkit for
 
 #### 1. Diary-Story Similarity Analysis
 - **Purpose**: Measures how well each agent's diary content is represented in the compiled daily story
-- **Method**: Uses TF-IDF vectorization and cosine similarity to quantify semantic overlap
+- **Method**: Uses TF-IDF vectorization and cosine similarity to quantify word overlap
 - **Output**: 
   - Similarity scores for each agent-day combination
   - Heatmap visualizations showing patterns across time
@@ -294,7 +296,7 @@ The frontend is built with HTML, CSS (Tailwind and custom styles), and JavaScrip
 - Real-time visualization of agent movement and activities.
 - Agent selection panel with avatars and details.
 - Needs bars for each agent.
-- Daily story panel showing the town-wide narrative.
+- A daily story panel (not yet fed by the runner; see [Known Limitations](#known-limitations)).
 - Simulation log and inspector for agents and locations.
 
 ## Customization
@@ -368,7 +370,7 @@ The generated narratives successfully demonstrate:
 - **Distinct Agent Personalities**: Charlie emerges as the most socially active and emotionally positive agent, while Alex shows strong work orientation balanced with social engagement
 - **Consistent Character Voices**: Each agent maintains recognizable behavioral patterns across the 14-day simulation period
 - **Realistic Social Dynamics**: The interaction patterns reveal natural social hierarchies with Charlie serving as a social hub
-- **Temporal Coherence**: Stories maintain logical day-to-day progression with appropriate references to previous events
+- **Weekly Rhythm**: Day-to-day progression follows each agent's weekly schedule (each prompt holds only that day's memories; see [Known Limitations](#known-limitations))
 - **Environmental Integration**: Agent narratives incorporate location details and environmental factors from the simulated town
 
 ### Key Findings
@@ -390,12 +392,21 @@ The generated narratives successfully demonstrate:
 
 The quantitative analysis employs rigorous NLP techniques:
 - **TF-IDF Vectorization**: Converts narrative text into numerical representations for mathematical comparison
-- **Cosine Similarity**: Measures semantic overlap between documents on a 0-1 scale
-- **Sentiment Analysis**: Uses TextBlob's trained models for emotional tone detection
+- **Cosine Similarity**: Measures word overlap between TF-IDF vectors on a 0–1 scale (lexical, not semantic, similarity)
+- **Sentiment Analysis**: Uses TextBlob's lexicon-based polarity and subjectivity scores
 - **Keyword-Based Pattern Analysis**: Tracks behavioral indicators across time and agents
 - **Statistical Aggregation**: Provides comprehensive rankings and trend analysis
 
-This multi-faceted approach provides empirical evidence that the hybrid architecture successfully generates coherent, believable narratives while maintaining distinct agent personalities and realistic social dynamics.
+Together these measures show distinct, stable agent voices and positive sentiment across the 14 days, while cohesion between each diary and the compiled town story is moderate (0.149 on average).
+
+## Known Limitations
+
+This is the prototype as submitted for the MSc thesis (tag `V1.0`). Known gaps:
+- **Daily stories don't reach the browser.** The runner generates them and saves them under `simulation/narrative/daily_stories/`, but it emits them through a Socket.IO server instance it isn't connected to, so the story panel stays empty. Read the stories from the saved files.
+- **A failed LLM call ends the run.** An API error propagates out of the simulation loop, which stops the simulation.
+- **Runs aren't reproducible.** Starting money, social choices, and processing order are random and unseeded, so two runs differ.
+- **No memory across days.** Diary and story prompts contain only that day's memories.
+- **One LLM provider.** The LLMHandler targets OpenAI's API only.
 
 ## Discussion and Future Work
 
